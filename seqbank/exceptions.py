@@ -1,0 +1,5 @@
+
+class SeqBankError(Exception):
+    pass
+
+

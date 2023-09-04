@@ -1,7 +1,9 @@
 from typing import Union
+from functools import cached_property
 import numpy as np
 import gzip
 import time
+import tempfile
 from pathlib import Path
 import h5py
 from Bio.Seq import Seq
@@ -10,24 +12,18 @@ from Bio import SeqIO
 from zlib import adler32
 from attrs import define
 from rich.progress import track
+import pyfastx
+from datetime import datetime
 
 from .transform import seq_to_numpy
-
-class SeqBankError(Exception):
-    pass
-
-
-def open_gzip(path:Path):
-    if path.suffix == ".gz":
-        return gzip.open(path, "rt")
-    return open(path, "rt")
+from .io import get_file_format, open_path, download_file
+from .exceptions import SeqBankError
 
 
-@define
+
+@define(slots=False)
 class SeqBank():
     path:Path
-    read_h5:object = None
-    write_h5:object = None
     
     def __getstate__(self):
         # Only returns required elements
@@ -39,28 +35,32 @@ class SeqBank():
         accession_hash = str(adler32(accession.encode('ascii')))
         return f"/{accession_hash[-6:-3]}/{accession_hash[-3:]}/{accession}"
 
-    def get_read_h5(self):
-        if not self.read_h5:
-            self.read_h5 = h5py.File(self.path, "a", libver='latest')
-        return self.read_h5
+    def key_url(self, url:str) -> str:
+        accession_hash = str(adler32(url.encode('ascii')))
+        filename = Path(url).name
+        return f"/urls/{accession_hash[-6:-3]}/{accession_hash[-3:]}/{filename}"
+
+    @cached_property
+    def file(self):
+        return h5py.File(self.path, "a", libver='latest')
 
     def __getitem__(self, accession:str) -> np.ndarray:
         try:
             key = self.key(accession)
-            file = self.get_read_h5()
+            file = self.file
             return file[key][:]
         except Exception as err:
             raise SeqBankError(f"Failed to read {accession} in SeqBank {self.path}:\n{err}")
 
     def __contains__(self, accession:str) -> bool:
         try:
-            return self.key(accession) in self.get_read_h5()
+            return self.key(accession) in self.file
         except Exception:
             return False
 
-    def delete(self, accession:str):
+    def delete(self, accession:str) -> None:
         key = self.key(accession)
-        f = self.get_read_h5()
+        f = self.file
         if key in f:
             try:
                 del f[key]
@@ -72,11 +72,8 @@ class SeqBank():
     def add(self, seq:Union[str, Seq, SeqRecord, np.ndarray], accession:str, all_accessions=None):
         key = self.key(accession)
 
-        if not self.write_h5:
-            self.write_h5 = h5py.File(self.path, "a")
-
-        if key in self.write_h5:
-            return self.write_h5[key]
+        if key in self.file:
+            return self.file[key]
         
         if isinstance(seq, SeqRecord):
             seq = seq.seq
@@ -88,7 +85,7 @@ class SeqBank():
         if all_accessions is not None:
             all_accessions.add(accession)
         
-        return self.write_h5.create_dataset(
+        return self.file.create_dataset(
             self.key(accession),
             data=seq,
             dtype="u1",
@@ -96,16 +93,35 @@ class SeqBank():
             compression_opts=9,
         )
 
-    def add_file(self, path:Path, format:str="", all_accessions=None):
-        format = format or path.suffix[1:]
-        with open_gzip(path) as f:
-            for record in SeqIO.parse(f, format):
-                print("adding", record.id)
-                self.add(record, record.id, all_accessions=all_accessions)
+    def add_file(self, path:Path, format:str=""):
+        format = format or get_file_format(path)
+
+        # If fasta or fastq use pyfastx for speed
+        if format in ["fasta", "fastq"]:
+            for accession, seq in track(pyfastx.Fasta(str(path), build_index=False)):
+                self.add(seq, accession)
+
+        with open_path(path) as f:
+            for record in track(SeqIO.parse(f, format)):
+                self.add(record, record.id)
+
+    def add_url(self, url:str, format:str="", force:bool=False) -> bool:
+        url_key = self.key_url(url)
+        if url_key in self.file and not force:
+            return False
+        
+        with tempfile.TemporaryDirectory() as tmpdirname:
+            local_path = Path(tmpdirname) / Path(url).name
+            download_file(url, local_path)
+            self.add_file(local_path, format=format)
+            
+            self.file[url_key] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            return True
 
     def get_accessions(self) -> set:
         accessions = set()
-        file = self.get_read_h5()
+        file = self.file
         main_keys = file.keys()
         for key0 in track(main_keys, "Getting accessions"):
             level2_keys = file[f"/{key0}"].keys()
@@ -113,18 +129,6 @@ class SeqBank():
                 dir_accessions = file[f"/{key0}/{key1}"].keys()
                 accessions.update(dir_accessions)
         return set(accessions)
-
-    # def get_accessions(self) -> set:
-    #     accessions = set()
-    #     file = self.get_read_h5()
-
-    #     def visitor_func(name, node):
-    #         if isinstance(node, h5py.Dataset):
-    #             accessions.add(name.split("/")[-1])
-
-    #     file.visititems(visitor_func)
-
-    #     return set(accessions)
 
     def download_accessions(self, accessions, base_dir:Path, email:str=None, all_accessions=None):
         base_dir.mkdir(exist_ok=True, parents=True)
