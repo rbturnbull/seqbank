@@ -32,7 +32,7 @@ def url(path:Path, urls:List[str], format:str="", max:int=0):
         result = seqbank.add_url(url, format=format)
         count += int(result)
 
-        if count >= max:
+        if max and count >= max:
             print(f"Maximum number of URLs reached: {max}")
             break
 
