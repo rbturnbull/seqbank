@@ -43,7 +43,8 @@ class SeqBank():
 
     @cached_property
     def file(self):
-        return zarr.open(self.path, mode='a')
+        store = zarr.ZipStore(self.path, mode='a')
+        return zarr.open(store, mode='a')
         # return h5py.File(self.path, "a", libver='latest')
 
     def __getitem__(self, accession:str) -> np.ndarray:
