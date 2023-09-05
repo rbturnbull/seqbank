@@ -5,7 +5,8 @@ import gzip
 import time
 import tempfile
 from pathlib import Path
-import h5py
+# import h5py
+import zarr
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
@@ -42,7 +43,8 @@ class SeqBank():
 
     @cached_property
     def file(self):
-        return h5py.File(self.path, "a", libver='latest')
+        return zarr.open(self.path, mode='a')
+        # return h5py.File(self.path, "a", libver='latest')
 
     def __getitem__(self, accession:str) -> np.ndarray:
         try:
@@ -89,8 +91,8 @@ class SeqBank():
             self.key(accession),
             data=seq,
             dtype="u1",
-            compression="gzip",
-            compression_opts=9,
+            # compression="gzip",
+            # compression_opts=9,
         )
 
     def add_file(self, path:Path, format:str=""):
