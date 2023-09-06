@@ -1,4 +1,4 @@
-from typing import Union
+from typing import Union, List
 from functools import cached_property
 import numpy as np
 import gzip
@@ -232,3 +232,14 @@ class SeqBank():
                 f.write(net_handle.read())
             net_handle.close()
         return local_path
+
+    def add_urls(self, urls:List[str], max:int=0, format:str="", force:bool=False):
+        count = 0
+        for url in urls:
+            print("Adding URL", url)
+            result = self.add_url(url, format=format, force=force)
+            count += int(result)
+
+            if max and count >= max:
+                print(f"Maximum number of URLs reached: {max}")
+                break

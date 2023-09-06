@@ -26,15 +26,7 @@ def url(path:Path, urls:List[str], format:str="", max:int=0):
     print(f"Opening seqbank '{path}'")
     seqbank = SeqBank(path=path)
     
-    count = 0
-    for url in urls:
-        print("Adding URL", url)
-        result = seqbank.add_url(url, format=format)
-        count += int(result)
-
-        if max and count >= max:
-            print(f"Maximum number of URLs reached: {max}")
-            break
+    seqbank.add_url(url, format=format, max=max)
 
 
 @app.command()
