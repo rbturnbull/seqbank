@@ -6,6 +6,7 @@ import time
 import tempfile
 from pathlib import Path
 # import h5py
+from joblib import Parallel, delayed
 import zarr
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -14,6 +15,7 @@ from zlib import adler32
 from attrs import define
 from rich.progress import track
 import pyfastx
+from rich.progress import Progress, TimeElapsedColumn, MofNCompleteColumn
 from datetime import datetime
 
 from .transform import seq_to_numpy
@@ -72,11 +74,11 @@ class SeqBank():
                 # f[key] = "" 
                 del f[key]
 
-    def add(self, seq:Union[str, Seq, SeqRecord, np.ndarray], accession:str, all_accessions=None):
+    def add(self, seq:Union[str, Seq, SeqRecord, np.ndarray], accession:str, all_accessions=None) -> None:
         key = self.key(accession)
 
         if key in self.file:
-            return self.file[key]
+            return
         
         if isinstance(seq, SeqRecord):
             seq = seq.seq
@@ -88,7 +90,7 @@ class SeqBank():
         if all_accessions is not None:
             all_accessions.add(accession)
         
-        return self.file.create_dataset(
+        self.file.create_dataset(
             self.key(accession),
             data=seq,
             dtype="u1",
@@ -96,29 +98,50 @@ class SeqBank():
             # compression_opts=9,
         )
 
-    def add_file(self, path:Path, format:str=""):
+    def add_file(self, path:Path, format:str="", progress=None, overall_task=None):
         format = format or get_file_format(path)
+        progress = progress or Progress()
 
         # If fasta or fastq use pyfastx for speed
         if format in ["fasta", "fastq"]:
-            for accession, seq in track(pyfastx.Fasta(str(path), build_index=False)):
+            total = sum(1 for _ in pyfastx.Fasta(str(path), build_index=False))
+            task = progress.add_task(f"[magenta]{path.name}", total=total)
+
+            for accession, seq in pyfastx.Fasta(str(path), build_index=False):
                 self.add(seq, accession)
+                progress.update(task, advance=1)
+
+            progress.update(task, visible=False)
+            if overall_task is not None:
+                progress.update(overall_task, advance=1)
+
+            print('Added', path.name)
+            return
 
         with open_path(path) as f:
             for record in track(SeqIO.parse(f, format)):
                 self.add(record, record.id)
 
-    def add_url(self, url:str, format:str="", force:bool=False) -> bool:
+    def seen_url(self, url:str) -> bool:
+        return self.key_url(url) in self.file
+    
+    def add_url(self, url:str, progress=None, format:str="", force:bool=False, overall_task=None) -> bool:
         url_key = self.key_url(url)
         if url_key in self.file and not force:
             return False
         
         with tempfile.TemporaryDirectory() as tmpdirname:
             local_path = Path(tmpdirname) / Path(url).name
-            download_file(url, local_path)
-            self.add_file(local_path, format=format)
-            
-            self.file[url_key] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            try:
+                download_file(url, local_path)
+                self.add_file(local_path, format=format, progress=progress, overall_task=overall_task)
+                
+                self.file.create_dataset(
+                    url_key,
+                    data=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                )
+            except Exception:
+                return False
 
             return True
 
@@ -233,13 +256,20 @@ class SeqBank():
             net_handle.close()
         return local_path
 
-    def add_urls(self, urls:List[str], max:int=0, format:str="", force:bool=False):
-        count = 0
+    def add_urls(self, urls:List[str], max:int=0, format:str="", force:bool=False, workers:int=-1):
+        # only add the URLs that haven't been seen before
+        urls = [url for url in urls if not self.seen_url(url)]
+        urls_to_add = []
         for url in urls:
-            print("Adding URL", url)
-            result = self.add_url(url, format=format, force=force)
-            count += int(result)
+            if not self.seen_url(url):
+                urls_to_add.append(url)
 
-            if max and count >= max:
-                print(f"Maximum number of URLs reached: {max}")
+            # truncate URLs list to `max` if requested
+            if max and len(urls_to_add) >= max:
                 break
+
+        with Progress(*Progress.get_default_columns(), TimeElapsedColumn(), MofNCompleteColumn()) as progress:
+            parallel = Parallel(n_jobs=workers, prefer="threads")
+            add_url = delayed(self.add_url)
+            overall_task = progress.add_task(f"[bold red]Adding URLs", total=len(urls_to_add))
+            parallel(add_url(url, progress=progress, format=format, force=force, overall_task=overall_task) for url in urls_to_add)

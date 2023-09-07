@@ -21,12 +21,12 @@ def add(path:Path, files:List[Path], format:str=""):
 
 
 @app.command()
-def url(path:Path, urls:List[str], format:str="", max:int=0):
+def url(path:Path, urls:List[str], format:str="", max:int=0, workers:int=-1):
     """ Add sequences from a URL to a seqbank """
     print(f"Opening seqbank '{path}'")
     seqbank = SeqBank(path=path)
     
-    seqbank.add_url(url, format=format, max=max)
+    seqbank.add_urls(urls, format=format, max=max, workers=workers)
 
 
 @app.command()
@@ -41,10 +41,10 @@ def delete(path:Path, accessions:List[str]):
 
 
 @app.command()
-def refseq(path:Path, max:int=0):
+def refseq(path:Path, max:int=0, workers:int=-1):
     """ Download all RefSeq sequences to a seqbank """    
     print("Getting RefSeq files list")
-    return url(path, get_refseq_urls(), max=max)
+    return url(path, get_refseq_urls(), max=max, workers=workers)
 
 
 
