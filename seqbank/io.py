@@ -26,6 +26,9 @@ def get_file_format(path:Path|str) -> str:
     if suffix in [".genbank", ".gb", ".gbk"]:
         return "genbank"
 
+    if suffix in [".embl"]:
+        return "embl"
+
     if suffix in [".tab", ".tsv"]:
         return "tsv"
 
