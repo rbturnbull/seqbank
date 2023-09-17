@@ -14,6 +14,7 @@ def add(path:Path, files:List[Path], format:str=""):
     """ Add sequences from a filepath to a seqbank """
     print(f"Opening seqbank '{path}'")
     seqbank = SeqBank(path=path)
+    seqbank.add_files(files)
     
     for path in files:
         print("Adding file", path)
