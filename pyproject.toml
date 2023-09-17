@@ -1,22 +1,22 @@
 [tool.poetry]
 name = "seqbank"
 version = "0.1.0"
-description = "An HDF5 wrapper for large DNA sequence datasets."
+description = "An Zarr wrapper for large DNA sequence datasets."
 authors = ["Robert Turnbull <robert.turnbull@unimelb.edu.au>"]
 license = "Apache-2.0"
 readme = "README.rst"
 
 [tool.poetry.dependencies]
-python = "^3.9"
+python = "^3.8"
 typer = "^0.9.0"
 numpy = "^1.25.2"
 pyfastx = "^1.1.0"
 future-typing = "^0.4.1"
 h5py = "^3.9.0"
 biopython = "^1.81"
-attrs = "^23.1.0"
-rich = "^13.5.2"
-requests = "^2.31.0"
+attrs = ">=23.1.0"
+rich = ">=10.16.1"
+requests = ">=2.31.0"
 zarr = "^2.16.1"
 joblib = "^1.3.2"
 
