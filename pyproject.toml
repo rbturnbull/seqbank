@@ -1,14 +1,14 @@
 [tool.poetry]
 name = "seqbank"
 version = "0.1.0"
-description = "An Zarr wrapper for large DNA sequence datasets."
+description = "A Zarr wrapper for large DNA sequence datasets."
 authors = ["Robert Turnbull <robert.turnbull@unimelb.edu.au>"]
 license = "Apache-2.0"
 readme = "README.rst"
 
 [tool.poetry.dependencies]
 python = "^3.8"
-typer = "^0.9.0"
+typer = ">=0.4.0"
 numpy = "^1.25.2"
 pyfastx = "^1.1.0"
 future-typing = "^0.4.1"
