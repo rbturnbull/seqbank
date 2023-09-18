@@ -273,3 +273,6 @@ class SeqBank():
             add_url = delayed(self.add_url)
             overall_task = progress.add_task(f"[bold red]Adding URLs", total=len(urls_to_add))
             parallel(add_url(url, progress=progress, format=format, force=force, overall_task=overall_task) for url in urls_to_add)
+
+    def ls(self):
+        breakpoint()

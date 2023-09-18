@@ -47,4 +47,9 @@ def refseq(path:Path, max:int=0, workers:int=-1):
     return url(path, get_refseq_urls(), max=max, workers=workers)
 
 
-
+@app.command()
+def ls(path:Path):
+    """ List accessions in a seqbank """    
+    print(f"Opening seqbank '{path}'")
+    seqbank = SeqBank(path=path)
+    seqbank.ls()
