@@ -48,6 +48,7 @@ class SeqBank():
     @cached_property
     def file(self):
         options = Options(raw_mode=True)
+        options.set_max_open_files(10000)
         options.set_compression_type(DBCompressionType.zstd())
         self._db = Rdict(path=str(self.path), options=options)
         atexit.register(self.close)
@@ -140,7 +141,8 @@ class SeqBank():
                 self.add_file(local_path, format=format, progress=progress, overall_task=overall_task)
                 
                 self.file[url_key] = bytes(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "ascii")
-            except Exception:
+            except Exception as err:
+                print(f"Failed to add URL: {url}: {err}")
                 return False
 
             return True
