@@ -667,6 +667,46 @@ pygments = ">=2.13.0,<3.0.0"
 jupyter = ["ipywidgets (>=7.5.1,<9)"]
 
 [[package]]
+name = "speedict"
+version = "0.3.11"
+description = "Speedb Python Binding"
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "speedict-0.3.11-cp310-cp310-macosx_10_14_x86_64.macosx_11_0_arm64.macosx_10_14_universal2.whl", hash = "sha256:b8f5fe81da9ef049a71f71f72939854c66f15dab2c16d0f59e4ad385afbb8f15"},
+    {file = "speedict-0.3.11-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:31cb4cb6d3bf16a52277a55f5a7683d7a907f598c27cceb202209514d27721d0"},
+    {file = "speedict-0.3.11-cp310-cp310-manylinux_2_28_aarch64.whl", hash = "sha256:9886bf67239abd2a839b75c8995a27f10caddf66a73ac844c2a400477c4ec6b0"},
+    {file = "speedict-0.3.11-cp310-cp310-manylinux_2_28_x86_64.whl", hash = "sha256:e3064fb12b66d7e99c8fb45cb9c8eb2e4f09be82c3b712937d66525a3ac53b8f"},
+    {file = "speedict-0.3.11-cp310-none-win32.whl", hash = "sha256:a20343f3aa0da44e6899af6bb856dea4748153b763e3f1598352803ddb01ef8b"},
+    {file = "speedict-0.3.11-cp310-none-win_amd64.whl", hash = "sha256:0707038aad34930d9ceda82dab5f0d44e685f5cc1017ff5c8380deb18b309571"},
+    {file = "speedict-0.3.11-cp311-cp311-macosx_10_14_x86_64.macosx_11_0_arm64.macosx_10_14_universal2.whl", hash = "sha256:474ac506f4dd3cce8f22fd44f476b633717cc7f0e69eec95ae23e3a4f5ed310f"},
+    {file = "speedict-0.3.11-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:541ca69696848a6b18d4821646457b39909698059b2c8ea46f6800487872f701"},
+    {file = "speedict-0.3.11-cp311-cp311-manylinux_2_28_aarch64.whl", hash = "sha256:48bba6f348bdac0f9236ff0d38fc6e37d0a1c75483654bf399d6b6baf11f165a"},
+    {file = "speedict-0.3.11-cp311-cp311-manylinux_2_28_x86_64.whl", hash = "sha256:af4305675e63d4306685eea78e2bf23a39b43df6991fec18f245834454316d9e"},
+    {file = "speedict-0.3.11-cp311-none-win32.whl", hash = "sha256:f84817e7aa30d9fe846165d6d0021113d38297efda7ad2351df960be0e12a5b7"},
+    {file = "speedict-0.3.11-cp311-none-win_amd64.whl", hash = "sha256:6a530fdc5e5de20841b66cd160651d4703b696f681a36630a87ed6c129334cde"},
+    {file = "speedict-0.3.11-cp37-cp37m-macosx_10_14_x86_64.macosx_11_0_arm64.macosx_10_14_universal2.whl", hash = "sha256:0b1ce843ad5d4736a2e64dd98c101af61cc74afb33b7f9b57b11afe293c06b8d"},
+    {file = "speedict-0.3.11-cp37-cp37m-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:a75d528fa13e57b66486e8b9fca1072d1d7b2b175a4f5befd85e3e569de97ebb"},
+    {file = "speedict-0.3.11-cp37-cp37m-manylinux_2_28_aarch64.whl", hash = "sha256:7e49a71986724c3607ca4df2d698f88a9712034e3d5905d3a84f04a3527556f5"},
+    {file = "speedict-0.3.11-cp37-cp37m-manylinux_2_28_x86_64.whl", hash = "sha256:f1d6ea9a8c3c7e92ec4883a344fa3eb435e192fcfb37cb3a5ef3f8553c44b079"},
+    {file = "speedict-0.3.11-cp37-none-win32.whl", hash = "sha256:f5898b5fe24523c7fab69c6de8f9b7579c6ba8ad15f3c82e50413fb3d641a461"},
+    {file = "speedict-0.3.11-cp37-none-win_amd64.whl", hash = "sha256:451f88496a5f2486ed54a0ced616bddad6544cb175ac21fa1ebb5cb087e12340"},
+    {file = "speedict-0.3.11-cp38-cp38-macosx_10_14_x86_64.macosx_11_0_arm64.macosx_10_14_universal2.whl", hash = "sha256:2c8d42342c228dbc6aa3139dd94538f4518070f795a4f14aadf3387dd9990a86"},
+    {file = "speedict-0.3.11-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:f7a4fc2868ac232fd99ce7bf531ca7364ca68c450823029f6feb39e5e5c74f59"},
+    {file = "speedict-0.3.11-cp38-cp38-manylinux_2_28_aarch64.whl", hash = "sha256:8cc362fd115d69143eba12d8c898099741b913c37220b512ae151dc0624d5327"},
+    {file = "speedict-0.3.11-cp38-cp38-manylinux_2_28_x86_64.whl", hash = "sha256:e1a5f8b20ddc7c15d5b1d58a18d897488faba8803302f295891913e0f6d523da"},
+    {file = "speedict-0.3.11-cp38-none-win32.whl", hash = "sha256:23fe5e6be0d724dc119b85d874cac9a53a9d531a63966c8fb97505f8f57848d5"},
+    {file = "speedict-0.3.11-cp38-none-win_amd64.whl", hash = "sha256:f33c9b7a5577d3597424d4098fe0a48bb22ce18cb104ec11c1aaf5e863a4209c"},
+    {file = "speedict-0.3.11-cp39-cp39-macosx_10_14_x86_64.macosx_11_0_arm64.macosx_10_14_universal2.whl", hash = "sha256:e8ed1413ad4f113306fd7a85bb4a158c8ff6e6fbc6001ac1831d5d87a72e13c6"},
+    {file = "speedict-0.3.11-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:d2409d3ca6ce86d4ee66bb47976adeaec35634d5227b67710e57ba491c0ff675"},
+    {file = "speedict-0.3.11-cp39-cp39-manylinux_2_28_aarch64.whl", hash = "sha256:9751f697f5c61ab82d5504d73c526692975a1750263758b2535347a3e621d133"},
+    {file = "speedict-0.3.11-cp39-cp39-manylinux_2_28_x86_64.whl", hash = "sha256:9f2ffeb4131856773e3eb2adc19e39f48d21ebda2b9e50603f644f04fc7c1ed8"},
+    {file = "speedict-0.3.11-cp39-none-win32.whl", hash = "sha256:7124c2a8c51fff527d33989daadf1cb961565116a0adc5e0421c5f251adc1158"},
+    {file = "speedict-0.3.11-cp39-none-win_amd64.whl", hash = "sha256:8ffc9b2958ececf781cda63e75c405fdbeaaa78207c3ec6f0cf1319f1557fea3"},
+]
+
+[[package]]
 name = "tomli"
 version = "2.0.1"
 description = "A lil' TOML parser"
@@ -755,4 +795,4 @@ jupyter = ["ipytree (>=0.2.2)", "ipywidgets (>=8.0.0)", "notebook"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.9"
-content-hash = "4ed75a4477f5480db20507eae65395754488f4cd72e8927c0ef8ab751a541cd3"
+content-hash = "e88f0837bb3adb7c489aafb6e4647776abf617f14a66067bb812c0a210caf5db"

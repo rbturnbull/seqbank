@@ -5,23 +5,22 @@ import gzip
 import time
 import tempfile
 from pathlib import Path
-# import h5py
 from joblib import Parallel, delayed
-import zarr
+# import zarr
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
-from zlib import adler32
 from attrs import define
 from rich.progress import track
 import pyfastx
 from rich.progress import Progress, TimeElapsedColumn, MofNCompleteColumn
 from datetime import datetime
-
-from .transform import seq_to_numpy
+from .transform import seq_to_bytes
 from .io import get_file_format, open_path, download_file
 from .exceptions import SeqBankError
-
+# from rocksdict import Rdict, Options
+from speedict import Rdict, Options, DBCompressionType
+import atexit
 
 
 @define(slots=False)
@@ -34,18 +33,27 @@ class SeqBank():
         return dict(path=self.path)
 
     def key(self, accession:str) -> str:
-        # Using adler32 for a fast deterministic hash
-        accession_hash = str(adler32(accession.encode('ascii')))
-        return f"/{accession_hash[-6:-3]}/{accession_hash[-3:]}/{accession}"
+        return bytes(accession, "ascii")
 
     def key_url(self, url:str) -> str:
-        accession_hash = str(adler32(url.encode('ascii')))
-        filename = Path(url).name
-        return f"/urls/{accession_hash[-6:-3]}/{accession_hash[-3:]}/{filename}"
+        return self.key("/URL/"+url)
+
+    def close(self):
+        print("closing database")
+        try:
+            self._db.close()
+        except Exception:
+            pass
 
     @cached_property
     def file(self):
-        store = zarr.ZipStore(self.path, mode='a')
+        options = Options(raw_mode=True)
+        options.set_compression_type(DBCompressionType.zstd())
+        self._db = Rdict(path=str(self.path), options=options)
+        atexit.register(self.close)
+        return self._db
+        store = zarr.DBMStore(self.path, open=dbm.gnu.open)
+        # store = zarr.ZipStore(self.path, mode='a')
         return zarr.open(store, mode='a')
         # return h5py.File(self.path, "a", libver='latest')
 
@@ -53,9 +61,13 @@ class SeqBank():
         try:
             key = self.key(accession)
             file = self.file
-            return file[key][:]
+            return np.frombuffer(file[key], dtype="u1")
         except Exception as err:
             raise SeqBankError(f"Failed to read {accession} in SeqBank {self.path}:\n{err}")
+
+    def items(self):
+        for k,v in self.file.items():
+            yield k, np.frombuffer(v, dtype="u1")
 
     def __contains__(self, accession:str) -> bool:
         try:
@@ -76,27 +88,18 @@ class SeqBank():
 
     def add(self, seq:Union[str, Seq, SeqRecord, np.ndarray], accession:str, all_accessions=None) -> None:
         key = self.key(accession)
-
-        if key in self.file:
-            return
+        # if key in self.file:
+        #     return
         
         if isinstance(seq, SeqRecord):
             seq = seq.seq
         if isinstance(seq, Seq):
             seq = str(seq)
         if isinstance(seq, str):
-            seq = seq_to_numpy(seq)
-
-        if all_accessions is not None:
-            all_accessions.add(accession)
+            seq = seq_to_bytes(seq)
         
-        self.file.create_dataset(
-            self.key(accession),
-            data=seq,
-            dtype="u1",
-            # compression="gzip",
-            # compression_opts=9,
-        )
+        # seq = compress(seq, self.compression)
+        self.file[key] = seq
 
     def add_file(self, path:Path, format:str="", progress=None, overall_task=None):
         format = format or get_file_format(path)
@@ -136,10 +139,7 @@ class SeqBank():
                 download_file(url, local_path)
                 self.add_file(local_path, format=format, progress=progress, overall_task=overall_task)
                 
-                self.file.create_dataset(
-                    url_key,
-                    data=datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                )
+                self.file[url_key] = bytes(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "ascii")
             except Exception:
                 return False
 
@@ -258,7 +258,6 @@ class SeqBank():
 
     def add_urls(self, urls:List[str], max:int=0, format:str="", force:bool=False, workers:int=-1):
         # only add the URLs that haven't been seen before
-        urls = [url for url in urls if not self.seen_url(url)]
         urls_to_add = []
         for url in urls:
             if not self.seen_url(url):
@@ -276,3 +275,11 @@ class SeqBank():
 
     def ls(self):
         breakpoint()
+
+    def add_files(self, files:List[str], max:int=0, format:str="", workers:int=1):
+        with Progress(*Progress.get_default_columns(), TimeElapsedColumn(), MofNCompleteColumn()) as progress:
+            parallel = Parallel(n_jobs=workers, prefer="threads")
+            add_file = delayed(self.add_file)
+            overall_task = progress.add_task(f"[bold red]Adding files", total=len(files))
+            parallel(add_file(file, progress=progress, format=format, overall_task=overall_task) for file in files)
+
