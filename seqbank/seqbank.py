@@ -141,7 +141,11 @@ class SeqBank():
 
     def seen_url(self, url:str) -> bool:
         return self.key_url(url) in self.file
-    
+
+    def save_seen_url(self, url:str):
+        url_key = self.key_url(url)
+        self.file[url_key] = bytes(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "ascii")
+
     def add_url(self, url:str, progress=None, format:str="", force:bool=False, overall_task=None) -> bool:
         url_key = self.key_url(url)
         if url_key in self.file and not force:
@@ -152,8 +156,7 @@ class SeqBank():
             try:
                 download_file(url, local_path)
                 self.add_file(local_path, format=format, progress=progress, overall_task=overall_task)
-                
-                self.file[url_key] = bytes(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "ascii")
+                self.save_seen_url(url)
             except Exception as err:
                 print(f"Failed to add URL: {url}: {err}")
                 return False
