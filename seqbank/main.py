@@ -13,7 +13,7 @@ app = typer.Typer()
 def add(path:Path, files:List[Path], format:str=""):
     """ Add sequences from a filepath to a seqbank """
     print(f"Opening seqbank '{path}'")
-    seqbank = SeqBank(path=path)
+    seqbank = SeqBank(path=path, write=True)
     seqbank.add_files(files)
     
     for path in files:
@@ -25,7 +25,7 @@ def add(path:Path, files:List[Path], format:str=""):
 def url(path:Path, urls:List[str], format:str="", max:int=0, workers:int=-1):
     """ Add sequences from a URL to a seqbank """
     print(f"Opening seqbank '{path}'")
-    seqbank = SeqBank(path=path)
+    seqbank = SeqBank(path=path, write=True)
     
     seqbank.add_urls(urls, format=format, max=max, workers=workers)
 
@@ -35,7 +35,7 @@ def delete(path:Path, accessions:List[str]):
     """ Deletes sequences from a seqbank """
 
     print(f"Opening seqbank '{path}'")
-    seqbank = SeqBank(path=path)
+    seqbank = SeqBank(path=path, write=True)
     
     for accesion in track(accessions, "Deleting"):
         seqbank.delete(accesion)
@@ -54,3 +54,10 @@ def ls(path:Path):
     print(f"Opening seqbank '{path}'")
     seqbank = SeqBank(path=path)
     seqbank.ls()
+
+
+@app.command()
+def count(path:Path):
+    print(f"Opening seqbank '{path}'")
+    seqbank = SeqBank(path=path)
+    print(len(seqbank), "sequences")

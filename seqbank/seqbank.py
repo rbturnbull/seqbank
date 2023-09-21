@@ -19,13 +19,14 @@ from .transform import seq_to_bytes
 from .io import get_file_format, open_path, download_file
 from .exceptions import SeqBankError
 # from rocksdict import Rdict, Options
-from speedict import Rdict, Options, DBCompressionType
+from speedict import Rdict, Options, DBCompressionType, AccessType
 import atexit
 
 
 @define(slots=False)
 class SeqBank():
     path:Path
+    write:bool = False
     
     def __getstate__(self):
         # Only returns required elements
@@ -36,7 +37,7 @@ class SeqBank():
         return bytes(accession, "ascii")
 
     def key_url(self, url:str) -> str:
-        return self.key("/URL/"+url)
+        return self.key("/seqbank/url/"+url)
 
     def close(self):
         print("closing database")
@@ -48,21 +49,33 @@ class SeqBank():
     @cached_property
     def file(self):
         options = Options(raw_mode=True)
-        options.set_max_open_files(10000)
-        options.set_compression_type(DBCompressionType.zstd())
-        self._db = Rdict(path=str(self.path), options=options)
+        options.set_max_open_files(5_000)
+        options.set_compression_type(DBCompressionType.none())
+        # options.set_cache_index_and_filter_blocks(True)
+        options.set_optimize_filters_for_hits(True)
+        options.optimize_for_point_lookup(1024)
+
+        self._db = Rdict(
+            path=str(self.path), 
+            options=options, 
+            access_type=AccessType.read_write() if self.write else AccessType.read_only()
+        )
         atexit.register(self.close)
         return self._db
-        store = zarr.DBMStore(self.path, open=dbm.gnu.open)
+        # store = zarr.DBMStore(self.path, open=dbm.gnu.open)
         # store = zarr.ZipStore(self.path, mode='a')
-        return zarr.open(store, mode='a')
+        # return zarr.open(store, mode='a')
         # return h5py.File(self.path, "a", libver='latest')
 
+    def __len___(self):
+        return sum(1 for _ in self.file.keys())
+        
     def __getitem__(self, accession:str) -> np.ndarray:
         try:
             key = self.key(accession)
             file = self.file
-            return np.frombuffer(file[key], dtype="u1")
+            return file[key]
+            # return np.frombuffer(file[key], dtype="u1")
         except Exception as err:
             raise SeqBankError(f"Failed to read {accession} in SeqBank {self.path}:\n{err}")
 
@@ -194,7 +207,7 @@ class SeqBank():
         net_handle.close()
         self.add_file(local_path, all_accessions=all_accessions)
 
-    def missing_accessions(self, accessions, get:bool=False):
+    def missing(self, accessions, get:bool=False) -> set:
         missing = set()
         for accession in track(accessions):
             if accession not in self:
