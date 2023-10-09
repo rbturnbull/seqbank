@@ -70,3 +70,12 @@ def count(path:Path):
     print(f"Opening seqbank '{path}'")
     seqbank = SeqBank(path=path)
     print(len(seqbank), "sequences")
+
+
+@app.command()
+def cp(path:Path, new:Path):
+    print(f"Opening seqbank '{path}'")
+    seqbank = SeqBank(path=path)
+    print(f"Opening seqbank '{new}'")
+    new = SeqBank(path=new, write=True)
+    seqbank.copy(new)
