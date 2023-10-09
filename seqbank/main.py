@@ -12,14 +12,10 @@ app = typer.Typer()
 
 @app.command()
 def add(path:Path, files:List[Path], format:str=""):
-    """ Add sequences from a filepath to a seqbank """
+    """ Add sequences from a file or list of files to a seqbank """
     print(f"Opening seqbank '{path}'")
     seqbank = SeqBank(path=path, write=True)
-    seqbank.add_files(files)
-    
-    for path in files:
-        print("Adding file", path)
-        seqbank.add_file(path, format=format)
+    seqbank.add_files(files, format=format)
 
 
 @app.command()

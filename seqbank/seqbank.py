@@ -27,6 +27,10 @@ import atexit
 class SeqBank():
     path:Path
     write:bool = False
+
+    def __attrs_post_init__(self):
+        if not self.write and not self.path.exists():
+            raise FileNotFoundError(f"Cannot find SeqBank file at path: {self.path}")
     
     def __getstate__(self):
         # Only returns required elements
@@ -40,7 +44,7 @@ class SeqBank():
         return self.key("/seqbank/url/"+url)
 
     def close(self):
-        print("closing database")
+        print(f"Closing SeqBank '{self.path}'")
         try:
             self._db.close()
         except Exception:
