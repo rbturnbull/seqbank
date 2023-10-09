@@ -49,17 +49,18 @@ class SeqBank():
     @cached_property
     def file(self):
         options = Options(raw_mode=True)
-        options.set_max_open_files(5_000)
         options.set_compression_type(DBCompressionType.none())
         # options.set_cache_index_and_filter_blocks(True)
         options.set_optimize_filters_for_hits(True)
         options.optimize_for_point_lookup(1024)
+        options.set_max_open_files(500)
 
         self._db = Rdict(
             path=str(self.path), 
             options=options, 
             access_type=AccessType.read_write() if self.write else AccessType.read_only()
         )
+
         atexit.register(self.close)
         return self._db
         # store = zarr.DBMStore(self.path, open=dbm.gnu.open)
@@ -67,9 +68,13 @@ class SeqBank():
         # return zarr.open(store, mode='a')
         # return h5py.File(self.path, "a", libver='latest')
 
-    def __len___(self):
-        return sum(1 for _ in self.file.keys())
+    def __len__(self):
+        count = 0
+        for _ in track(self.file.keys()):
+            count += 1
         
+        return count
+
     def __getitem__(self, accession:str) -> np.ndarray:
         try:
             key = self.key(accession)
@@ -300,4 +305,8 @@ class SeqBank():
             add_file = delayed(self.add_file)
             overall_task = progress.add_task(f"[bold red]Adding files", total=len(files))
             parallel(add_file(file, progress=progress, format=format, overall_task=overall_task) for file in files)
+
+    def copy(self, other):
+        for k,v in track(self.file.items()):
+            other.file[k] = v
 
