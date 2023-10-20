@@ -120,7 +120,7 @@ class SeqBank():
         # seq = compress(seq, self.compression)
         self.file[key] = seq
 
-    def add_file(self, path:Path, format:str="", progress=None, overall_task=None):
+    def add_file(self, path:Path, format:str="", progress=None, overall_task=None) -> None:
         format = format or get_file_format(path)
         progress = progress or Progress()
 
@@ -132,17 +132,21 @@ class SeqBank():
             for accession, seq in pyfastx.Fasta(str(path), build_index=False):
                 self.add(seq, accession)
                 progress.update(task, advance=1)
+        else:
+            with open_path(path) as f:
+                total = sum(1 for _ in SeqIO.parse(f, format))
+            
+            with open_path(path) as f:
+                task = progress.add_task(f"[magenta]{path.name}", total=total)
+                for record in SeqIO.parse(f, format):
+                    self.add(record, record.id)
+                    progress.update(task, advance=1)
 
-            progress.update(task, visible=False)
-            if overall_task is not None:
-                progress.update(overall_task, advance=1)
+        progress.update(task, visible=False)
+        if overall_task is not None:
+            progress.update(overall_task, advance=1)
 
-            print('Added', path.name)
-            return
-
-        with open_path(path) as f:
-            for record in track(SeqIO.parse(f, format)):
-                self.add(record, record.id)
+        print('Added', path.name)
 
     def seen_url(self, url:str) -> bool:
         return self.key_url(url) in self.file
