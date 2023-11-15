@@ -30,7 +30,10 @@ def get_file_format(path:Path|str) -> str:
         return "embl"
 
     if suffix in [".tab", ".tsv"]:
-        return "tsv"
+        return "tab"
+
+    if suffix in [".nexus", ".nxs"]:
+        return "nexus"
 
     if suffix in [".fastq", ".fq"]:
         return "fastq"

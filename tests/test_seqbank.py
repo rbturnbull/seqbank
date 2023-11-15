@@ -104,6 +104,28 @@ def test_export():
         assert len(text) > 5000
 
 
+def test_export_tsv_with_accessions():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        seqbank = SeqBank(path=tmpdirname/"seqbank.h5", write=True)
+
+        seqbank.add_file(test_data/"NC_024664.1.trunc.fasta")
+        seqbank.add_file(test_data/"NZ_JAJNFP010000161.1.fasta")
+        seqbank.add_file(test_data/"NC_036112.1.fasta")
+        seqbank.add_file(test_data/"NC_044840.1.fasta")
+        seqbank.add_file(test_data/"NC_010663.1.gb")
+        seqbank.add_file(test_data/"NC_036113.1.fasta")
+
+        exported_path_tsv = tmpdirname/"exported.tsv"
+        seqbank.export(exported_path_tsv, accessions=["NC_024664.1", "NC_010663.1"])
+
+        assert exported_path_tsv.exists()
+        text = exported_path_tsv.read_text()
+        assert text.count("\t") == 2
+        assert 'NC_024664.1\tTAAAAAGAAAAA' in text
+        assert 'NC_010663.1\tAGTTTTAAAC' in text
+
+
 def test_get_acccessions():
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
