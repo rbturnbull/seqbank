@@ -78,6 +78,7 @@ def cp(path:Path, new:Path):
 
 
 @app.command()
-def export(path:Path, format:str="fasta"):
+def export(path:Path, output:Path, format:str="fasta"):
     print(f"Opening seqbank '{path}'")
     seqbank = SeqBank(path=path)
+    return seqbank.export(output, format=format)
