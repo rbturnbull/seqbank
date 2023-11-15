@@ -15,7 +15,7 @@ from rich.progress import track
 import pyfastx
 from rich.progress import Progress, TimeElapsedColumn, MofNCompleteColumn
 from datetime import datetime
-from .transform import seq_to_bytes
+from .transform import seq_to_bytes, bytes_to_str
 from .io import get_file_format, open_path, download_file
 from .exceptions import SeqBankError
 # from rocksdict import Rdict, Options
@@ -180,12 +180,11 @@ class SeqBank():
         accessions = set()
         file = self.file
         main_keys = file.keys()
-        for key0 in track(main_keys, "Getting accessions"):
-            level2_keys = file[f"/{key0}"].keys()
-            for key1 in level2_keys:
-                dir_accessions = file[f"/{key0}/{key1}"].keys()
-                accessions.update(dir_accessions)
-        return set(accessions)
+        for key in file.keys():
+            accession = key.decode("ascii")
+            if not accession.startswith("/seqbank/"):
+                accessions.update([accession])
+        return accessions
 
     def download_accessions(self, accessions, base_dir:Path, email:str=None, all_accessions=None):
         base_dir.mkdir(exist_ok=True, parents=True)
@@ -317,4 +316,43 @@ class SeqBank():
     def copy(self, other):
         for k,v in track(self.file.items()):
             other.file[k] = v
+
+    def numpy(self, accession) -> np.ndarray:
+        """
+        Returns the seq data for an accession as an unsigned char NumPy array.
+        """
+        return np.frombuffer(self[accession], dtype="u1")
+
+    def string(self, accession:str) -> str:
+        """
+        Returns the seq data for an accession as a string.
+        """
+        data = self[accession]
+        return bytes_to_str(data)
+
+    def record(self, accession:str) -> SeqRecord:
+        """
+        Returns a BioPython SeqRecord object for an accession.
+        """
+        record = SeqRecord(
+            Seq(self.string(accession)),
+            id=accession,
+            description="",
+        )
+        return record
+
+    def export(self, output:Path|str, format:str="", accessions:List[str]|str|Path|None=None):
+        """
+        Exports the data in a seqbank to a file using BioPython
+        """
+        accessions = accessions or self.get_accessions()
+
+        # Read list of accessions if given file
+        if isinstance(accessions, (str,Path)):
+            accessions = Path(accessions).read_text().strip().split("\n")
+
+        format = format or get_file_format(output)
+        with open(output, "w") as f:
+            for accession in accessions:
+                SeqIO.write(self.record(accession), f, format)
 

@@ -34,8 +34,8 @@ def delete(path:Path, accessions:List[str]):
     print(f"Opening seqbank '{path}'")
     seqbank = SeqBank(path=path, write=True)
     
-    for accesion in track(accessions, "Deleting"):
-        seqbank.delete(accesion)
+    for accession in track(accessions, "Deleting"):
+        seqbank.delete(accession)
 
 
 @app.command()
@@ -75,3 +75,9 @@ def cp(path:Path, new:Path):
     print(f"Opening seqbank '{new}'")
     new = SeqBank(path=new, write=True)
     seqbank.copy(new)
+
+
+@app.command()
+def export(path:Path, format:str="fasta"):
+    print(f"Opening seqbank '{path}'")
+    seqbank = SeqBank(path=path)
