@@ -1,3 +1,5 @@
+# -*- coding: future_typing -*-
+
 from typing import Union, List
 from functools import cached_property
 import numpy as np
