@@ -19,7 +19,7 @@ sys.path.insert(0, os.path.abspath(".."))
 # -- Project information -----------------------------------------------------
 
 project = "Seqbank"
-copyright = "2022, Robert Turnbull"
+copyright = "2023, Robert Turnbull"
 author = "Robert Turnbull"
 
 # The full version, including alpha/beta/rc tags
