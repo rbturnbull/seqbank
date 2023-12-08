@@ -11,11 +11,11 @@ from .dfam import download_dfam
 app = typer.Typer()
 
 @app.command()
-def add(path:Path, files:List[Path], format:str=""):
+def add(path:Path, files:List[Path], format:str="", filter:Path=None):
     """ Add sequences from a file or list of files to a seqbank """
     print(f"Opening seqbank '{path}'")
     seqbank = SeqBank(path=path, write=True)
-    seqbank.add_files(files, format=format)
+    seqbank.add_files(files, format=format, filter=filter)
 
 
 @app.command()
