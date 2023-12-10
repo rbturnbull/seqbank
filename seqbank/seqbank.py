@@ -1,6 +1,6 @@
 # -*- coding: future_typing -*-
 
-from typing import Union, List
+from typing import Union, List, Set
 from functools import cached_property
 import numpy as np
 import gzip
@@ -20,6 +20,7 @@ from datetime import datetime
 from .transform import seq_to_bytes, bytes_to_str
 from .io import get_file_format, open_path, download_file
 from .exceptions import SeqBankError
+from .utils import parse_filter
 # from rocksdict import Rdict, Options
 from speedict import Rdict, Options, DBCompressionType, AccessType
 import atexit
@@ -47,7 +48,6 @@ class SeqBank():
         return self.key("/seqbank/url/"+url)
 
     def close(self):
-        print(f"Closing SeqBank '{self.path}'")
         try:
             self._db.close()
         except Exception:
@@ -127,7 +127,8 @@ class SeqBank():
         # seq = compress(seq, self.compression)
         self.file[key] = seq
 
-    def add_file(self, path:Path, format:str="", progress=None, overall_task=None) -> None:
+    def add_file(self, path:Path, format:str="", progress=None, overall_task=None, filter:Path|list|set|None=None) -> None:
+        filter = parse_filter(filter)
         format = format or get_file_format(path)
         progress = progress or Progress()
 
@@ -137,6 +138,8 @@ class SeqBank():
             task = progress.add_task(f"[magenta]{path.name}", total=total)
 
             for accession, seq in pyfastx.Fasta(str(path), build_index=False):
+                if filter and accession not in filter:
+                    continue
                 self.add(seq, accession)
                 progress.update(task, advance=1)
         else:
@@ -146,6 +149,9 @@ class SeqBank():
             with open_path(path) as f:
                 task = progress.add_task(f"[magenta]{path.name}", total=total)
                 for record in SeqIO.parse(f, format):
+                    if filter and record.id not in filter:
+                        continue
+
                     self.add(record, record.id)
                     progress.update(task, advance=1)
 
@@ -309,12 +315,14 @@ class SeqBank():
     def ls(self):
         breakpoint()
 
-    def add_files(self, files:List[str], max:int=0, format:str="", workers:int=1):
+    def add_files(self, files:List[str], max:int=0, format:str="", workers:int=1, filter:Path|list|set|None=None):
+        filter = parse_filter(filter)
+
         with Progress(*Progress.get_default_columns(), TimeElapsedColumn(), MofNCompleteColumn()) as progress:
             parallel = Parallel(n_jobs=workers, prefer="threads")
             add_file = delayed(self.add_file)
             overall_task = progress.add_task(f"[bold red]Adding files", total=len(files))
-            parallel(add_file(file, progress=progress, format=format, overall_task=overall_task) for file in files)
+            parallel(add_file(file, progress=progress, format=format, overall_task=overall_task, filter=filter) for file in files)
 
     def copy(self, other):
         for k,v in track(self.file.items()):
