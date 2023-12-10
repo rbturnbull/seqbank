@@ -31,6 +31,7 @@ class SeqBank():
     write:bool = False
 
     def __attrs_post_init__(self):
+        self.path = Path(self.path).expanduser()
         if not self.write and not self.path.exists():
             raise FileNotFoundError(f"Cannot find SeqBank file at path: {self.path}")
     
