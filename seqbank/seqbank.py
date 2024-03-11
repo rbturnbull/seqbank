@@ -319,7 +319,8 @@ class SeqBank():
             parallel(add_url(url, progress=progress, format=format, force=force, overall_task=overall_task) for url in urls_to_add)
 
     def ls(self):
-        breakpoint()
+        for k in self.file.keys():
+            print(k.decode("ascii"))
 
     def add_files(self, files:List[str], max:int=0, format:str="", workers:int=1, filter:Path|list|set|None=None):
         filter = parse_filter(filter)

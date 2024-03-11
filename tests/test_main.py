@@ -1,8 +1,9 @@
 import tempfile
 from typer.testing import CliRunner
-
+from time import sleep
 from seqbank.main import app
 from pathlib import Path
+import shutil
 
 runner = CliRunner()
 
@@ -27,3 +28,47 @@ def test_export():
         assert ">NC_036113.1\nGAAATACCCAATATCTTGTTCC" in text
         assert ">NC_044840.1\nGGGCGAACGACGGGAATTGAACCCGC" in text
         assert len(text) > 5000
+
+
+def test_count():
+    result = runner.invoke(app, ["count", str(test_data/"seqbank.sb")])
+    assert result.exit_code == 0
+    assert "6\n" in result.stdout
+
+
+def test_ls():
+    result = runner.invoke(app, ["ls", str(test_data/"seqbank.sb")])
+    assert result.exit_code == 0
+    assert result.stdout == 'NC_010663.1\nNC_024664.1\nNC_036112.1\nNC_036113.1\nNC_044840.1\nNZ_JAJNFP010000161.1\n'
+
+
+def test_cp():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+
+        new_path = tmpdirname/"new.sb"
+        assert new_path.exists() == False
+        result = runner.invoke(app, ["cp", str(test_data/"seqbank.sb"), str(new_path)])
+        assert result.exit_code == 0
+        assert new_path.exists()
+
+        result = runner.invoke(app, ["ls", str(new_path)])
+        assert result.exit_code == 0
+        assert result.stdout == 'NC_010663.1\nNC_024664.1\nNC_036112.1\nNC_036113.1\nNC_044840.1\nNZ_JAJNFP010000161.1\n'
+
+
+def test_delete():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        new_path = tmpdirname/"new.sb"
+
+        shutil.copytree(test_data/"seqbank.sb", new_path)
+
+        result = runner.invoke(app, ["delete", str(new_path), "NC_010663.1"])
+        assert result.exit_code == 0
+
+        result = runner.invoke(app, ["ls", str(new_path)])
+        assert result.exit_code == 0
+        assert "NC_010663.1\n" not in result.stdout
+        assert 'NC_024664.1\nNC_036112.1\nNC_036113.1\nNC_044840.1\nNZ_JAJNFP010000161.1\n' in result.stdout
+

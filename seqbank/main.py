@@ -55,24 +55,22 @@ def dfam(path:Path, release:str="current", curated:bool=True):
 
 @app.command()
 def ls(path:Path):
-    """ List accessions in a seqbank """    
-    print(f"Opening seqbank '{path}'")
+    """ List accessions in a seqbank """  
     seqbank = SeqBank(path=path)
     seqbank.ls()
 
 
 @app.command()
 def count(path:Path):
-    print(f"Opening seqbank '{path}'")
+    """ Displays the number of accessions in a seqbank """  
     seqbank = SeqBank(path=path)
-    print(len(seqbank), "sequences")
+    print(len(seqbank))
 
 
 @app.command()
 def cp(path:Path, new:Path):
-    print(f"Opening seqbank '{path}'")
+    print(f"Copying seqbank '{path}' to '{new}'")
     seqbank = SeqBank(path=path)
-    print(f"Opening seqbank '{new}'")
     new = SeqBank(path=new, write=True)
     seqbank.copy(new)
 
