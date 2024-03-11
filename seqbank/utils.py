@@ -2,9 +2,18 @@
 
 from typing import List, Set
 from pathlib import Path
-import hashlib
 
-def parse_filter(filter:Path|list|set|None=None):
+def parse_filter(filter:Path|list|set|None=None) -> Set[str]:
+    """ Returns a set of strings to use as a filter.
+     
+    Args:   
+        filter: A list, set or Path to a file containing a list of strings to use as a filter.
+                If it is a Path, it should point to a file containing a list of strings, one per line.
+                It can also be None, in which case it returns None.
+        
+    Returns:
+        A set of strings to use as a filter.
+    """
     if not filter:
         return None
     

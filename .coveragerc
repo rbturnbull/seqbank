@@ -1,0 +1,5 @@
+[run]
+source = seqbank
+
+[report]
+precision = 2
