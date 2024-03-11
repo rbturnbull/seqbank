@@ -2,6 +2,8 @@
 
 from pathlib import Path
 import gzip
+import bz2
+from Bio import SeqIO
 import requests
 
 def open_path(path:Path|str):
@@ -10,6 +12,10 @@ def open_path(path:Path|str):
 
     if suffix == ".gz":
         return gzip.open(path, "rt")
+    
+    if suffix == ".bz2":
+        return bz2.open(path, "rt")
+    
     return open(path, "rt")
 
 
@@ -17,7 +23,7 @@ def get_file_format(path:Path|str) -> str:
     path = Path(path)
     suffix = path.suffix.lower()
 
-    if suffix == ".gz":
+    if suffix in [".gz", ".bz2"]:
         suffix = path.suffixes[-2].lower()
 
     if suffix in [".fa", ".fna", ".fasta"]:
@@ -39,6 +45,13 @@ def get_file_format(path:Path|str) -> str:
         return "fastq"
 
     raise ValueError(f"Cannot determine file format of {path}.")
+
+
+def seq_count(path:Path|str) -> int:
+    format = get_file_format(path)
+    with open_path(path) as f:
+        total = sum(1 for _ in SeqIO.parse(f, format))
+    return total
 
 
 def download_file(url:str, local_path:Path):

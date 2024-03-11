@@ -4,7 +4,9 @@ from seqbank import SeqBank
 import numpy as np
 from Bio.SeqRecord import SeqRecord
 
-test_data = Path(__file__).parent / "testdata"
+
+TEST_DATA_PATH = Path(__file__).parent / "testdata"
+
 
 def test_seqbank_add():
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -19,25 +21,25 @@ def test_seqbank_add_file():
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
         seqbank = SeqBank(path=tmpdirname/"seqbank.sb", write=True)
-        # seqbank = SeqBank(path=test_data/"seqbank.sb", write=True)
+        # seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb", write=True)
 
-        seqbank.add_file(test_data/"NC_024664.1.trunc.fasta")
+        seqbank.add_file(TEST_DATA_PATH/"NC_024664.1.trunc.fasta")
         assert "NC_024664.1" in seqbank
         assert len(seqbank["NC_024664.1"]) == 840
 
-        seqbank.add_file(test_data/"NZ_JAJNFP010000161.1.fasta")
+        seqbank.add_file(TEST_DATA_PATH/"NZ_JAJNFP010000161.1.fasta")
         assert len(seqbank["NZ_JAJNFP010000161.1"]) == 849
 
-        seqbank.add_file(test_data/"NC_036112.1.fasta")
+        seqbank.add_file(TEST_DATA_PATH/"NC_036112.1.fasta")
         assert len(seqbank["NC_036112.1"]) == 980
         
-        seqbank.add_file(test_data/"NC_044840.1.fasta")
+        seqbank.add_file(TEST_DATA_PATH/"NC_044840.1.fasta")
         assert len(seqbank["NC_044840.1"]) == 700
 
-        seqbank.add_file(test_data/"NC_010663.1.gb", format="genbank")
+        seqbank.add_file(TEST_DATA_PATH/"NC_010663.1.gb", format="genbank")
         assert len(seqbank["NC_010663.1"]) == 1066
 
-        seqbank.add_file(test_data/"NC_036113.1.fasta")
+        seqbank.add_file(TEST_DATA_PATH/"NC_036113.1.fasta")
         assert len(seqbank["NC_036113.1"]) == 1050
 
         
@@ -45,13 +47,13 @@ def test_record():
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
         seqbank = SeqBank(path=tmpdirname/"seqbank.sb", write=True)
-        seqbank.add_file(test_data/"NC_036113.1.fasta")
+        seqbank.add_file(TEST_DATA_PATH/"NC_036113.1.fasta")
 
         record = seqbank.record("NC_036113.1")
         
 
 def test_string():
-    seqbank = SeqBank(path=test_data/"seqbank.sb")
+    seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
     
     string = seqbank.string("NC_036113.1")
     assert isinstance(string, str)
@@ -61,7 +63,7 @@ def test_string():
         
 
 def test_record():
-    seqbank = SeqBank(path=test_data/"seqbank.sb")
+    seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
 
     record = seqbank.record("NC_010663.1")
     assert len(record) == 1066
@@ -72,7 +74,7 @@ def test_record():
 
 
 def test_export():
-    seqbank = SeqBank(path=test_data/"seqbank.sb")
+    seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
@@ -93,7 +95,7 @@ def test_export():
 
 
 def test_export_tsv_with_accessions():
-    seqbank = SeqBank(path=test_data/"seqbank.sb")
+    seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
@@ -109,6 +111,6 @@ def test_export_tsv_with_accessions():
 
 
 def test_get_acccessions():
-    seqbank = SeqBank(path=test_data/"seqbank.sb")
+    seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
     accessions = seqbank.get_accessions()
     assert accessions == {'NC_036112.1', 'NC_024664.1', 'NC_010663.1', 'NC_036113.1', 'NC_044840.1', 'NZ_JAJNFP010000161.1'}

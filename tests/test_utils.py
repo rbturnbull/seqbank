@@ -1,13 +1,13 @@
 from seqbank.utils import parse_filter
 from pathlib import Path
 
-test_data = Path(__file__).parent / "testdata"
+TEST_DATA_PATH = Path(__file__).parent / "testdata"
 
 def test_parse_filter():
     assert parse_filter(None) == None
     assert parse_filter(["a", "b", "c"]) == {"a", "b", "c"}
     assert parse_filter({"a", "b", "c"}) == {"a", "b", "c"}
-    assert parse_filter(test_data/"accessions.txt") == {
+    assert parse_filter(TEST_DATA_PATH/"accessions.txt") == {
         "NC_036112.1",
         "NC_024664.1",
         "NC_010663",
