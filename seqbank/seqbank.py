@@ -72,9 +72,13 @@ class SeqBank():
 
         atexit.register(self.close)
         return self._db
+        
+        # For zarr
         # store = zarr.DBMStore(self.path, open=dbm.gnu.open)
         # store = zarr.ZipStore(self.path, mode='a')
         # return zarr.open(store, mode='a')
+        
+        # For h5py
         # return h5py.File(self.path, "a", libver='latest')
 
     def __len__(self):
