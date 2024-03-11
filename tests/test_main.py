@@ -1,7 +1,7 @@
 import tempfile
 from typer.testing import CliRunner
-from time import sleep
 from seqbank.main import app
+from unittest.mock import patch
 from pathlib import Path
 import shutil
 
@@ -72,3 +72,45 @@ def test_delete():
         assert "NC_010663.1\n" not in result.stdout
         assert 'NC_024664.1\nNC_036112.1\nNC_036113.1\nNC_044840.1\nNZ_JAJNFP010000161.1\n' in result.stdout
 
+
+def test_add():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        new_path = tmpdirname/"new.sb"
+
+        result = runner.invoke(app, ["add", str(new_path), str(test_data/"NC_036113.1.fasta"), str(test_data/"NC_024664.1.trunc.fasta")])
+        assert result.exit_code == 0
+
+        result = runner.invoke(app, ["count", str(new_path)])
+        assert result.exit_code == 0
+        assert "2\n" in result.stdout
+
+
+def test_add_fail():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        new_path = tmpdirname/"new.sb"
+
+        result = runner.invoke(app, ["add", str(new_path), str(test_data/"NC_036113.1.NOT_HERE"), str(test_data/"NC_024664.1.trunc.fasta")])
+        assert result.exit_code == 1
+
+
+def copy_NC_036113(url, path):
+    shutil.copy(test_data/"NC_036113.1.fasta", path)
+
+
+def test_url():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        new_path = tmpdirname/"new.sb"
+
+        with patch("seqbank.seqbank.download_file", copy_NC_036113):
+            result = runner.invoke(app, ["url", str(new_path), "http://example.com/NC_036113.1.fasta"])
+            assert result.exit_code == 0
+
+        result = runner.invoke(app, ["ls", str(new_path)])
+        assert result.exit_code == 0
+        assert result.stdout == '/seqbank/url/http://example.com/NC_036113.1.fasta\nNC_036113.1\n'
+
+
+        

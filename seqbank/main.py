@@ -69,6 +69,7 @@ def count(path:Path):
 
 @app.command()
 def cp(path:Path, new:Path):
+    """ Copies each sequence from one seqbank to another. """
     print(f"Copying seqbank '{path}' to '{new}'")
     seqbank = SeqBank(path=path)
     new = SeqBank(path=new, write=True)
@@ -77,6 +78,6 @@ def cp(path:Path, new:Path):
 
 @app.command()
 def export(path:Path, output:Path, format:str="fasta"):
-    print(f"Opening seqbank '{path}'")
+    print(f"Exporting seqbank '{path}' to '{output}' in {format} format")
     seqbank = SeqBank(path=path)
     return seqbank.export(output, format=format)
