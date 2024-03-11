@@ -17,13 +17,15 @@ from rich.progress import track
 import pyfastx
 from rich.progress import Progress, TimeElapsedColumn, MofNCompleteColumn
 from datetime import datetime
+# from rocksdict import Rdict, Options
+from speedict import Rdict, Options, DBCompressionType, AccessType
+import atexit
+
 from .transform import seq_to_bytes, bytes_to_str
 from .io import get_file_format, open_path, download_file
 from .exceptions import SeqBankError
 from .utils import parse_filter
-# from rocksdict import Rdict, Options
-from speedict import Rdict, Options, DBCompressionType, AccessType
-import atexit
+
 
 
 @define(slots=False)
@@ -112,7 +114,7 @@ class SeqBank():
                 # f[key] = "" 
                 del f[key]
 
-    def add(self, seq:Union[str, Seq, SeqRecord, np.ndarray], accession:str, all_accessions=None) -> None:
+    def add(self, seq:Union[str, Seq, SeqRecord, np.ndarray], accession:str) -> None:
         key = self.key(accession)
         # if key in self.file:
         #     return
@@ -195,7 +197,7 @@ class SeqBank():
                 accessions.update([accession])
         return accessions
 
-    def download_accessions(self, accessions, base_dir:Path, email:str=None, all_accessions=None):
+    def download_accessions(self, accessions, base_dir:Path, email:str=None):
         base_dir.mkdir(exist_ok=True, parents=True)
         local_path = base_dir / "downloaded.fa.gz"
 
@@ -229,7 +231,7 @@ class SeqBank():
         with gzip.open(local_path, "wt") as f:
             f.write(net_handle.read())
         net_handle.close()
-        self.add_file(local_path, all_accessions=all_accessions)
+        self.add_file(local_path)
 
     def missing(self, accessions, get:bool=False) -> set:
         missing = set()
@@ -243,7 +245,7 @@ class SeqBank():
                     missing.add(accession)
         return missing
 
-    def add_accessions(self, accessions, base_dir:Path, email:str=None, all_accessions=None, batch_size=200, sleep:float=1.0):
+    def add_accessions(self, accessions, base_dir:Path, email:str=None, batch_size=200, sleep:float=1.0):
         to_download = []
         for accession in track(accessions):
             if accession in self:
@@ -251,14 +253,14 @@ class SeqBank():
 
             to_download.append(accession)
             if len(to_download) >= batch_size:
-                self.download_accessions(to_download, base_dir=base_dir, email=email, all_accessions=all_accessions)
+                self.download_accessions(to_download, base_dir=base_dir, email=email)
                 time.sleep(sleep)
                 to_download = []
         
-        self.download_accessions(to_download, base_dir=base_dir, email=email, all_accessions=all_accessions)
+        self.download_accessions(to_download, base_dir=base_dir, email=email)
             # fasta_path = self.individual_accession_path(accession, base_dir=base_dir, email=email)
             # if fasta_path:
-            #     self.add_file(fasta_path, all_accessions=all_accessions)
+            #     self.add_file(fasta_path)
 
     def individual_accession_path(self, accession: str, base_dir:Path, download: bool = True, email=None) -> Path:
         local_path = base_dir / f"{accession}.fa.gz"
@@ -367,3 +369,4 @@ class SeqBank():
             for accession in accessions:
                 SeqIO.write(self.record(accession), f, format)
 
+    

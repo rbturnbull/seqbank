@@ -2,7 +2,7 @@
 
 from typing import List, Set
 from pathlib import Path
-
+import hashlib
 
 def parse_filter(filter:Path|list|set|None=None):
     if not filter:
@@ -13,3 +13,4 @@ def parse_filter(filter:Path|list|set|None=None):
     
     return set(filter)
     
+
