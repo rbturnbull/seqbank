@@ -22,7 +22,7 @@ from speedict import Rdict, Options, DBCompressionType, AccessType
 import atexit
 
 from .transform import seq_to_bytes, bytes_to_str
-from .io import get_file_format, open_path, download_file
+from .io import get_file_format, open_path, download_file, seq_count
 from .exceptions import SeqBankError
 from .utils import parse_filter
 
@@ -149,8 +149,7 @@ class SeqBank():
                 self.add(seq, accession)
                 progress.update(task, advance=1)
         else:
-            with open_path(path) as f:
-                total = sum(1 for _ in SeqIO.parse(f, format))
+            total = seq_count(path)
             
             with open_path(path) as f:
                 task = progress.add_task(f"[magenta]{path.name}", total=total)
