@@ -177,3 +177,4 @@ refseq/
 
 outputs/
 *.sb
+.DS_Store
