@@ -1,4 +1,3 @@
-# -*- coding: future_typing -*-
 
 import numpy as np
 
