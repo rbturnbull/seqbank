@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: future_typing -*-
 
 from pathlib import Path
 import gzip

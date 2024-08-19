@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: future_typing -*-
 
 from typing import List, Set
 from pathlib import Path

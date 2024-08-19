@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+# -*- coding: future_typing -*-
 
 import numpy as np
 
