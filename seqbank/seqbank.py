@@ -37,11 +37,6 @@ class SeqBank():
         self.path = Path(self.path).expanduser()
         if not self.write and not self.path.exists():
             raise FileNotFoundError(f"Cannot find SeqBank file at path: {self.path}")
-    
-    def __getstate__(self):
-        # Only returns required elements
-        # Needed because h5 files cannot be pickled
-        return dict(path=self.path)
 
     def key(self, accession:str) -> str:
         return bytes(accession, "ascii")
