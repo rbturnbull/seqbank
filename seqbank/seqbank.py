@@ -1,4 +1,4 @@
-# -*- coding: future_typing -*-
+# -*- coding: utf-8 -*-
 
 from typing import Union, List, Set
 from functools import cached_property
