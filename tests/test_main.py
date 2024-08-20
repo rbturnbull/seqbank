@@ -95,7 +95,10 @@ def test_add_fail():
 
 
 def copy_NC_036113(url, path):
-    shutil.copy(TEST_DATA_PATH/"NC_036113.1.fasta", path)
+    if "NC_036113.1.fasta" in url:
+        shutil.copy(TEST_DATA_PATH/"NC_036113.1.fasta", path)
+    elif "NC_024664.1.trunc.fasta" in url:
+        shutil.copy(TEST_DATA_PATH/"NC_024664.1.trunc.fasta", path)
 
 
 def test_url():
@@ -111,5 +114,23 @@ def test_url():
         assert result.exit_code == 0
         assert result.stdout == '/seqbank/url/http://example.com/NC_036113.1.fasta\nNC_036113.1\n'
 
+def mock_get_refseq_urls():
+    return ["http://example.com/NC_036113.1.fasta", "http://example.com/NC_024664.1.trunc.fasta"]
 
-        
+def test_refseq():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        new_path = tmpdirname/"new.sb"
+
+        # Patch the get_refseq_urls to return our mock URLs and patch download_file to copy test data
+        with patch("seqbank.main.get_refseq_urls", mock_get_refseq_urls):
+            with patch("seqbank.seqbank.download_file", copy_NC_036113):
+                result = runner.invoke(app, ["refseq", str(new_path)])
+                assert result.exit_code == 0
+
+        # Check that the sequences have been added correctly
+        result = runner.invoke(app, ["ls", str(new_path)])
+        assert result.exit_code == 0
+        assert 'NC_024664.1\n' in result.stdout
+        assert 'NC_036113.1\n' in result.stdout
+        print(result.stdout)
