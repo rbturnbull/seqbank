@@ -141,3 +141,32 @@ def test_close():
         # Since we are not interacting with the actual file system in the test,
         # we cannot directly check the closed state. We can only assert that no errors occur.
 
+def test_file_not_found_error():
+    # Test when the file does not exist
+    temp_dir = Path('non_existing_directory')
+    temp_dir.mkdir(parents=True, exist_ok=True)  # Create temp_dir if needed
+
+    # File path that does not exist
+    non_existing_path = temp_dir / 'non_existing_file.sb'
+    
+    with pytest.raises(FileNotFoundError, match=f"Cannot find SeqBank file at path: {non_existing_path}"):
+        # Initialize SeqBank with write=False and a non-existing path
+        SeqBank(path=non_existing_path, write=False)
+
+def test_no_exception_when_file_exists():
+    # Test when the file exists
+    temp_file = Path('existing_file.sb')
+    
+    try:
+        # Create a temporary file
+        temp_file.touch()
+        
+        # Initialize SeqBank with write=False and an existing path
+        seqbank = SeqBank(path=temp_file, write=False)
+        
+        # No exception should be raised
+        assert seqbank.path == temp_file.expanduser()
+    finally:
+        # Clean up
+        if temp_file.exists():
+            temp_file.unlink()
