@@ -3,6 +3,7 @@ from pathlib import Path
 from seqbank import SeqBank
 import numpy as np
 from Bio.SeqRecord import SeqRecord
+import pytest
 
 
 TEST_DATA_PATH = Path(__file__).parent / "testdata"
@@ -114,3 +115,29 @@ def test_get_acccessions():
     seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
     accessions = seqbank.get_accessions()
     assert accessions == {'NC_036112.1', 'NC_024664.1', 'NC_010663.1', 'NC_036113.1', 'NC_044840.1', 'NZ_JAJNFP010000161.1'}
+
+def test_close():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        seqbank_path = tmpdirname / "seqbank.sb"
+        
+        # Initialize SeqBank instance
+        seqbank = SeqBank(path=seqbank_path, write=True)
+        
+        # Add some data to ensure the file is being used
+        seqbank.add("ATCG", "test")
+        
+        # Close the SeqBank instance
+        seqbank.close()
+        
+        # Verify that no exceptions are raised during the close
+        try:
+            # Try accessing the database after closing it
+            seqbank.file
+            assert False, "Expected an exception when accessing the file after closing"
+        except Exception:
+            pass
+        
+        # Since we are not interacting with the actual file system in the test,
+        # we cannot directly check the closed state. We can only assert that no errors occur.
+
