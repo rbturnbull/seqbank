@@ -201,3 +201,32 @@ def test_get_item_successful_retrieval():
     
     # Assert that the result matches the expected data
     assert np.array_equal(result, expected_result)
+
+# Mock SeqBank for testing
+class MockSeqBankForItems(SeqBank):
+    def __init__(self, path: Path, write: bool = False):
+        super().__init__(path, write)
+        # Mock file with sample data
+        self.file = {
+            'key1': b'\x01\x02\x03',
+            'key2': b'\x04\x05\x06'
+        }
+
+    def __attrs_post_init__(self):
+        # Skip file existence check
+        pass
+
+def test_items():
+    mock_seqbank = MockSeqBankForItems(path=Path('mock.sb'), write=False)
+    
+    expected_items = {
+        'key1': np.array([1, 2, 3], dtype='u1'),
+        'key2': np.array([4, 5, 6], dtype='u1')
+    }
+    
+    # Convert generator to dict
+    result = dict(mock_seqbank.items())
+    
+    for key, expected_array in expected_items.items():
+        assert key in result
+        assert np.array_equal(result[key], expected_array)
