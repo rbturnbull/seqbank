@@ -1,6 +1,6 @@
 import tempfile
 from pathlib import Path
-from seqbank import SeqBank
+from seqbank import SeqBank, SeqBankError
 import numpy as np
 from Bio.SeqRecord import SeqRecord
 import pytest
@@ -144,7 +144,7 @@ def test_close():
 def test_file_not_found_error():
     # Test when the file does not exist
     temp_dir = Path('non_existing_directory')
-    temp_dir.mkdir(parents=True, exist_ok=True)  # Create temp_dir if needed
+    temp_dir.mkdir(parents=True, exist_ok=True)  # Create temp_dir
 
     # File path that does not exist
     non_existing_path = temp_dir / 'non_existing_file.sb'
@@ -170,3 +170,34 @@ def test_no_exception_when_file_exists():
         # Clean up
         if temp_file.exists():
             temp_file.unlink()
+
+class MockSeqBank(SeqBank):
+    def __init__(self, path: Path, write: bool = False):
+        # Override to avoid file existence check
+        self.path = path
+        self.write = write
+        # Mock file content based on the path
+        if 'nonexistent' in str(path):
+            self.file = None
+        else:
+            self.file = {'valid_key': np.array([0, 1, 2, 3], dtype="u1")}
+
+    def __attrs_post_init__(self):
+        # Skip file existence check
+        pass
+
+    def key(self, accession: str) -> str:
+        return accession
+
+def test_get_item_successful_retrieval():
+   # Initialize MockSeqBank with a mock file
+    mock_seqbank = MockSeqBank(path=Path('mock.sb'), write=False)
+    
+    # Retrieve data using a valid key
+    result = mock_seqbank['valid_key']
+    
+    # Expected data as a NumPy array
+    expected_result = np.array([0, 1, 2, 3], dtype="u1")
+    
+    # Assert that the result matches the expected data
+    assert np.array_equal(result, expected_result)
