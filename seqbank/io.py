@@ -1,4 +1,3 @@
-# -*- coding: future_typing -*-
 
 from pathlib import Path
 import gzip
