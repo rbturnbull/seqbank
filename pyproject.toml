@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "seqbank"
 version = "0.1.2"
-description = "A wrapper for large DNA sequence datasets."
+description = "A database to quickly read and write DNA sequence data in numerical form."
 authors = ["Robert Turnbull <robert.turnbull@unimelb.edu.au>"]
 license = "Apache-2.0"
 readme = "README.rst"

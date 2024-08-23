@@ -25,7 +25,7 @@ Seqbank
 
 .. start-quickstart
 
-A wrapper for large DNA sequence datasets
+A database to quickly read and write DNA sequence data in numerical form.
 
 Installation
 ============
