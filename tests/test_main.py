@@ -1,9 +1,13 @@
 import tempfile
 from typer.testing import CliRunner
 from seqbank.main import app
-from unittest.mock import patch
+from seqbank.seqbank import SeqBank
+from unittest.mock import patch, MagicMock
 from pathlib import Path
+from seqbank.dfam import download_dfam, add_dfam
 import shutil
+import pytest
+import h5py
 
 TEST_DATA_PATH = Path(__file__).parent / "testdata"
 
@@ -94,8 +98,11 @@ def test_add_fail():
         assert result.exit_code == 1
 
 
-def copy_NC_036113(url, path):
-    shutil.copy(TEST_DATA_PATH/"NC_036113.1.fasta", path)
+def copy_dummy_fasta(url, path):
+    if "NC_036113.1.fasta" in url:
+        shutil.copy(TEST_DATA_PATH/"NC_036113.1.fasta", path)
+    elif "NC_024664.1.trunc.fasta" in url:
+        shutil.copy(TEST_DATA_PATH/"NC_024664.1.trunc.fasta", path)
 
 
 def test_url():
@@ -103,7 +110,7 @@ def test_url():
         tmpdirname = Path(tmpdirname)
         new_path = tmpdirname/"new.sb"
 
-        with patch("seqbank.seqbank.download_file", copy_NC_036113):
+        with patch("seqbank.seqbank.download_file", copy_dummy_fasta):
             result = runner.invoke(app, ["url", str(new_path), "http://example.com/NC_036113.1.fasta"])
             assert result.exit_code == 0
 
@@ -111,5 +118,73 @@ def test_url():
         assert result.exit_code == 0
         assert result.stdout == '/seqbank/url/http://example.com/NC_036113.1.fasta\nNC_036113.1\n'
 
+def mock_get_refseq_urls():
+    return ["http://example.com/NC_036113.1.fasta", "http://example.com/NC_024664.1.trunc.fasta"]
 
-        
+def test_refseq():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        new_path = tmpdirname/"new.sb"
+
+        # Patch the get_refseq_urls to return our mock URLs and patch download_file to copy test data
+        with patch("seqbank.main.get_refseq_urls", mock_get_refseq_urls):
+            with patch("seqbank.seqbank.download_file", copy_dummy_fasta):
+                result = runner.invoke(app, ["refseq", str(new_path)])
+                assert result.exit_code == 0
+
+        # Check that the sequences have been added correctly
+        result = runner.invoke(app, ["ls", str(new_path)])
+        assert result.exit_code == 0
+        assert 'NC_024664.1\n' in result.stdout
+        assert 'NC_036113.1\n' in result.stdout
+
+@pytest.fixture
+def seqbank_with_temp_dir():
+    """Fixture to create a SeqBank instance with a temporary directory."""
+    temp_dir = tempfile.TemporaryDirectory()
+    seqbank = SeqBank(path=Path(temp_dir.name), write=True)
+    yield seqbank, Path(temp_dir.name)
+    temp_dir.cleanup()
+
+@pytest.fixture
+def temp_hdf5_file():
+    """Fixture to create a temporary HDF5 file with test data."""
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.h5')
+    file_path = Path(temp_file.name)
+
+    # Create HDF5 file with test data
+    with h5py.File(file_path, 'w') as f:
+        group = f.create_group('Families/DF')
+        dataset = group.create_dataset('test_dataset', data=[], dtype='S1')
+        dataset.attrs['accession'] = 'DF000001.1'
+        dataset.attrs['consensus'] = 'Mock sequence data for DF000001.1'
+        dataset = group.create_dataset('test_dataset2', data=[], dtype='S1')
+        dataset.attrs['accession'] = 'DF000002.1'
+        dataset.attrs['consensus'] = 'Mock sequence data for DF000002.1'
+    
+    yield file_path
+
+    # Clean up the temporary file
+    file_path.unlink()
+
+def mock_add_dfam(seqbank: SeqBank, local_path: Path):
+    """Mock function to simulate adding sequences to SeqBank."""
+    seqbank.add = MagicMock()
+    seqbank.add(seq="Mock sequence data for DF000001.1", accession="DF000001.1")
+    seqbank.add(seq="Mock sequence data for DF000002.1", accession="DF000002.1")
+
+@patch('seqbank.dfam.download_dfam')
+def test_dfam(mock_download_dfam, seqbank_with_temp_dir, temp_hdf5_file):
+    """Test the dfam command."""
+    seqbank, _ = seqbank_with_temp_dir
+
+    # Mock download_dfam to simulate successful download and addition of DFam sequences
+    def mock_download_dfam(seqbank, curated=True, release="current", force=False):
+        mock_add_dfam(seqbank, temp_hdf5_file)
+        return True
+
+    mock_download_dfam.side_effect = mock_download_dfam
+
+    # Run the dfam command
+    result = runner.invoke(app, ["dfam", str(seqbank.path)])
+    assert result.exit_code == 0, f"DFAM command failed with error: {result.output}"
