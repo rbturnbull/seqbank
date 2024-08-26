@@ -98,7 +98,7 @@ def test_add_fail():
         assert result.exit_code == 1
 
 
-def copy_NC_036113(url, path):
+def copy_dummy_fasta(url, path):
     if "NC_036113.1.fasta" in url:
         shutil.copy(TEST_DATA_PATH/"NC_036113.1.fasta", path)
     elif "NC_024664.1.trunc.fasta" in url:
@@ -110,7 +110,7 @@ def test_url():
         tmpdirname = Path(tmpdirname)
         new_path = tmpdirname/"new.sb"
 
-        with patch("seqbank.seqbank.download_file", copy_NC_036113):
+        with patch("seqbank.seqbank.download_file", copy_dummy_fasta):
             result = runner.invoke(app, ["url", str(new_path), "http://example.com/NC_036113.1.fasta"])
             assert result.exit_code == 0
 
@@ -128,7 +128,7 @@ def test_refseq():
 
         # Patch the get_refseq_urls to return our mock URLs and patch download_file to copy test data
         with patch("seqbank.main.get_refseq_urls", mock_get_refseq_urls):
-            with patch("seqbank.seqbank.download_file", copy_NC_036113):
+            with patch("seqbank.seqbank.download_file", copy_dummy_fasta):
                 result = runner.invoke(app, ["refseq", str(new_path)])
                 assert result.exit_code == 0
 
