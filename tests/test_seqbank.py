@@ -4,6 +4,7 @@ from seqbank import SeqBank, SeqBankError
 import numpy as np
 from Bio.SeqRecord import SeqRecord
 import pytest
+from unittest.mock import patch, MagicMock
 
 
 TEST_DATA_PATH = Path(__file__).parent / "testdata"
@@ -230,3 +231,42 @@ def test_items():
     for key, expected_array in expected_items.items():
         assert key in result
         assert np.array_equal(result[key], expected_array)
+
+@pytest.fixture
+def seqbank_with_data(tmp_path):
+    """Fixture to set up a SeqBank instance with some predefined data."""
+    seqbank_path = tmp_path / "seqbank.db"
+    seqbank = SeqBank(path=seqbank_path, write=True)
+    
+    # Adding some sequences to SeqBank
+    seqbank.add("ATCG", "seq1")
+    seqbank.add("GCTA", "seq2")
+    
+    return seqbank   
+
+def test_missing(seqbank_with_data):
+    seqbank = seqbank_with_data
+    
+    # List of accessions to check
+    accessions_to_check = ["seq1", "seq2", "seq3"]
+    
+    # Expected missing accessions
+    expected_missing = {"seq3"}
+    
+    # Call the missing method without fetching missing accessions
+    missing_accessions = seqbank.missing(accessions_to_check)
+    
+    assert missing_accessions == expected_missing
+
+def test_missing_with_get(seqbank_with_data):
+    seqbank = seqbank_with_data
+    
+    # List of accessions to check
+    accessions_to_check = ["seq1", "seq2", "seq3"]
+    
+    # Mocking the behavior of fetching missing accessions
+    with patch.object(seqbank, '__getitem__', side_effect=lambda x: seqbank.file[seqbank.key(x)] if x != "seq3" else None):
+        missing_accessions = seqbank.missing(accessions_to_check, get=True)
+    
+    # Since 'seq3' cannot be fetched, it should be reported as missing
+    assert missing_accessions == {"seq3"}
