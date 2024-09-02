@@ -367,4 +367,19 @@ class SeqBank():
             for accession in accessions:
                 SeqIO.write(self.record(accession), f, format)
 
+    def get_accession_lengths(self) -> dict:
+        """
+        Returns a dictionary where the keys are the accessions and the values 
+        are the corresponding lengths of each sequence.
+        """
+        accession_lengths = {}
+
+        for accession in self.get_accessions():
+            # Retrieve the sequence string using the string method
+            sequence = self.string(accession)
+            # Store the length of the sequence in the dictionary
+            accession_lengths[accession] = len(sequence)
+
+        return accession_lengths
+    
     
