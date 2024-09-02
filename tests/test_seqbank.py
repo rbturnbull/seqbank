@@ -270,3 +270,41 @@ def test_missing_with_get(seqbank_with_data):
     
     # Since 'seq3' cannot be fetched, it should be reported as missing
     assert missing_accessions == {"seq3"}
+
+@pytest.fixture
+def setup_seqbank(tmp_path):
+    # Create a temporary directory for the SeqBank
+    seqbank_path = tmp_path / "test_seqbank"
+    seqbank_path.mkdir()
+
+    # Create a SeqBank instance
+    seqbank = SeqBank(path=seqbank_path, write=True)
+    
+    # Add sample sequences to the SeqBank
+    sample_sequences = {
+        "seq1": "ATCG",
+        "seq2": "ATCGATCG",
+        "seq3": "ATCGATCGATCG"
+    }
+
+    for accession, sequence in sample_sequences.items():
+        seqbank.add(sequence, accession)
+
+    return seqbank
+
+def test_get_accession_lengths(setup_seqbank):
+    # Retrieve the SeqBank instance from the fixture
+    seqbank = setup_seqbank
+
+    # Expected lengths of the sequences
+    expected_lengths = {
+        "seq1": 4,
+        "seq2": 8,
+        "seq3": 12
+    }
+
+    # Get lengths from the SeqBank
+    lengths = seqbank.get_accession_lengths()
+
+    # Assert that the lengths match the expected values
+    assert lengths == expected_lengths
