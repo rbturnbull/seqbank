@@ -4,7 +4,7 @@ from seqbank import SeqBank, SeqBankError
 import numpy as np
 from Bio.SeqRecord import SeqRecord
 import pytest
-from plotly.graph_objs import Figure
+import plotly.graph_objs as go
 from unittest.mock import patch, MagicMock
 
 
@@ -293,7 +293,7 @@ def setup_seqbank(tmp_path):
 
     return seqbank
 
-def test_get_accession_lengths(setup_seqbank):
+def test_lengths_dict(setup_seqbank):
     # Retrieve the SeqBank instance from the fixture
     seqbank = setup_seqbank
 
@@ -305,17 +305,23 @@ def test_get_accession_lengths(setup_seqbank):
     }
 
     # Get lengths from the SeqBank
-    lengths = seqbank.get_accession_lengths()
+    lengths = seqbank.lengths_dict()
 
     # Assert that the lengths match the expected values
     assert lengths == expected_lengths
 
-def test_plot_length_histogram(setup_seqbank):
+def test_histogram(setup_seqbank):
     # Retrieve the SeqBank instance from the fixture
     seqbank = setup_seqbank
 
     # Generate the histogram figure
-    fig = seqbank.plot_length_histogram()
+    fig = seqbank.histogram()
 
     # Check that fig is a Plotly Figure object
-    assert isinstance(fig, Figure)
+    assert isinstance(fig, go.Figure)
+
+    # Check that there is a trace in the figure with type 'histogram'
+    histogram_traces = [trace for trace in fig.data if trace.type == 'histogram']
+
+    # Assert that there is at least one histogram trace
+    assert len(histogram_traces) == 1, "The figure does not contain one histogram trace."
