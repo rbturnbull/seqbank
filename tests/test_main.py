@@ -5,7 +5,7 @@ from seqbank.seqbank import SeqBank
 from unittest.mock import patch, MagicMock
 from pathlib import Path
 from seqbank.dfam import download_dfam, add_dfam
-from plotly.graph_objs import Figure
+import plotly.graph_objs as go
 import shutil
 import pytest
 import h5py
@@ -194,22 +194,55 @@ def test_dfam(mock_download_dfam, seqbank_with_temp_dir, temp_hdf5_file):
 
 
 
-def test_histogram():
-    """Test the save_histogram command."""
+def test_histogram_with_output_path():
+    """Test the histogram command with an output path specified."""
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
 
-        output_path = tmpdirname/"temp_histogram.png"
+        output_path = tmpdirname / "temp_histogram.png"
         
         runner = CliRunner()
 
-        # Run the save_histogram command
-        result = runner.invoke(app, ["histogram", str(TEST_DATA_PATH/"seqbank.sb"), "--output-path", str(output_path)])
+        # Run the histogram command with an output path
+        result = runner.invoke(app, ["histogram", str(TEST_DATA_PATH / "seqbank.sb"), "--output-path", str(output_path)])
 
         # Check the output message
         assert "Histogram saved to" in result.output
-
         assert output_path.exists()
+        assert result.exit_code == 0
 
+def test_histogram_without_output_path():
+    """Test the histogram command without specifying an output path."""
+    
+    # Mock the show method of the figure object
+    with patch("plotly.graph_objs.Figure.show") as mock_show:
+        runner = CliRunner()
+
+        # Run the histogram command without an output path
+        result = runner.invoke(app, ["histogram", str(TEST_DATA_PATH / "seqbank.sb")])
+
+        # Since output_path is None, show should be set to True, and fig.show() should be called
+        mock_show.assert_called_once()
+
+        # Assert that no save message appears
+        assert "Histogram saved to" not in result.output
+        
         # Assert the command ran successfully
+        assert result.exit_code == 0
+
+def test_histogram_with_show():
+    """Test the histogram command with the --show option."""
+
+    # Mock the show method of the figure object
+    with patch("plotly.graph_objs.Figure.show") as mock_show:
+        runner = CliRunner()
+
+        # Run the histogram command with the --show option
+        result = runner.invoke(app, ["histogram", str(TEST_DATA_PATH / "seqbank.sb"), "--show"])
+
+        # Assert that fig.show() was called
+        mock_show.assert_called_once()
+
+        # Since --show is True, the histogram should be shown (not saved)
+        assert "Histogram saved to" not in result.output
         assert result.exit_code == 0
