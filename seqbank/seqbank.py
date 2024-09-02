@@ -384,7 +384,7 @@ class SeqBank():
 
         return accession_lengths
     
-    def histogram(self, nbins:int=30) -> go.Figure:
+    def histogram(self, nbins: int = 30) -> go.Figure:
         """
         Creates a histogram of the lengths of all sequences and returns the Plotly figure object.
         """
@@ -397,10 +397,11 @@ class SeqBank():
         # Create the histogram using Plotly Express
         fig = px.histogram(lengths, nbins=nbins, title="Histogram of Sequence Lengths")
         
-        # Add labels and customize the layout
+        # Add labels and customize the layout, removing the legend
         fig.update_layout(
             xaxis_title="Sequence Length",
-            yaxis_title="Count"
+            yaxis_title="Count",
+            showlegend=False  # Remove the legend
         )
 
         return fig
