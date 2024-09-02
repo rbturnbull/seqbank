@@ -8,7 +8,7 @@ from .refseq import get_refseq_urls
 from .seqbank import SeqBank
 from .dfam import download_dfam
 
-from plotly.graph_objs import Figure
+import plotly.graph_objs as go
 
 app = typer.Typer()
 
@@ -93,7 +93,7 @@ def histogram(path:Path, output_path:Path=None, show:bool=False, nbins:int=30):
     seqbank = SeqBank(path=path)
 
     # Generate the histogram
-    fig: Figure = seqbank.plot_length_histogram(nbins=nbins)
+    fig: go.Figure = seqbank.histogram(nbins=nbins)
 
     # Save the histogram to the specified output path
     if output_path is None:
