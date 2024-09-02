@@ -8,6 +8,7 @@ import tempfile
 from pathlib import Path
 from joblib import Parallel, delayed
 import plotly.express as px
+from plotly.graph_objs import Figure
 # import zarr
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
