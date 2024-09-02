@@ -85,7 +85,7 @@ def export(path:Path, output:Path, format:str="fasta"):
     return seqbank.export(output, format=format)
 
 @app.command()
-def save_histogram(path:Path, output_path:Path):
+def histogram(path:Path, output_path:Path):
     """
     Generates a histogram of sequence lengths from a SeqBank and saves it to a file.
     """

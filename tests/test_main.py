@@ -10,6 +10,8 @@ import shutil
 import pytest
 import h5py
 
+from .test_seqbank import setup_seqbank
+
 TEST_DATA_PATH = Path(__file__).parent / "testdata"
 
 runner = CliRunner()
@@ -190,56 +192,24 @@ def test_dfam(mock_download_dfam, seqbank_with_temp_dir, temp_hdf5_file):
     result = runner.invoke(app, ["dfam", str(seqbank.path)])
     assert result.exit_code == 0, f"DFAM command failed with error: {result.output}"
 
-@pytest.fixture
-def setup_seqbank(tmp_path):
-    # Create a temporary directory for the SeqBank
-    seqbank_path = tmp_path / "test_seqbank"
-    seqbank_path.mkdir()
 
-    # Create a SeqBank instance and add sample sequences
-    seqbank = SeqBank(path=seqbank_path, write=True)
-    sample_sequences = {
-        "seq1": "ATCG",
-        "seq2": "ATCGATCG",
-        "seq3": "ATCGATCGATCG"
-    }
-    for accession, sequence in sample_sequences.items():
-        seqbank.add(sequence, accession)
-    
-    return seqbank, seqbank_path
 
-@pytest.fixture
-def temp_paths():
-    """Create temporary file paths for testing."""
-    temp_path = Path("temp_seqbank")
-    temp_output_path = Path("temp_histogram.png")
-    return temp_path, temp_output_path
-
-def test_save_histogram(temp_paths):
+def test_histogram():
     """Test the save_histogram command."""
-    temp_path, temp_output_path = temp_paths
-    runner = CliRunner()
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
 
-    # Mock the SeqBank class and its methods
-    with patch("seqbank.seqbank.SeqBank") as MockSeqBank:
-        mock_seqbank = MagicMock()
-        MockSeqBank.return_value = mock_seqbank
-
-        # Mock the plot_length_histogram method to return a mock figure
-        mock_fig = MagicMock()
-        mock_seqbank.plot_length_histogram.return_value = mock_fig
+        output_path = tmpdirname/"temp_histogram.png"
+        
+        runner = CliRunner()
 
         # Run the save_histogram command
-        result = runner.invoke(app, ["save_histogram", str(temp_path), str(temp_output_path)])
+        result = runner.invoke(app, ["histogram", str(TEST_DATA_PATH/"seqbank.sb"), str(output_path)])
 
         # Check the output message
         assert "Histogram saved to" in result.output
 
-        # Assert the plot_length_histogram method was called
-        mock_seqbank.plot_length_histogram.assert_called_once()
-
-        # Assert the write_image method was called on the mock figure
-        mock_fig.write_image.assert_called_once_with(temp_output_path)
+        assert output_path.exists()
 
         # Assert the command ran successfully
         assert result.exit_code == 0
