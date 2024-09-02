@@ -4,6 +4,7 @@ from seqbank import SeqBank, SeqBankError
 import numpy as np
 from Bio.SeqRecord import SeqRecord
 import pytest
+from plotly.graph_objs import Figure
 from unittest.mock import patch, MagicMock
 
 
@@ -308,3 +309,13 @@ def test_get_accession_lengths(setup_seqbank):
 
     # Assert that the lengths match the expected values
     assert lengths == expected_lengths
+
+def test_plot_length_histogram(setup_seqbank):
+    # Retrieve the SeqBank instance from the fixture
+    seqbank = setup_seqbank
+
+    # Generate the histogram figure
+    fig = seqbank.plot_length_histogram()
+
+    # Check that fig is a Plotly Figure object
+    assert isinstance(fig, Figure)
