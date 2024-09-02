@@ -204,7 +204,7 @@ def test_histogram():
         runner = CliRunner()
 
         # Run the save_histogram command
-        result = runner.invoke(app, ["histogram", str(TEST_DATA_PATH/"seqbank.sb"), str(output_path)])
+        result = runner.invoke(app, ["histogram", str(TEST_DATA_PATH/"seqbank.sb"), "--output-path", str(output_path)])
 
         # Check the output message
         assert "Histogram saved to" in result.output

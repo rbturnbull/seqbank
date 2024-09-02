@@ -85,17 +85,23 @@ def export(path:Path, output:Path, format:str="fasta"):
     return seqbank.export(output, format=format)
 
 @app.command()
-def histogram(path:Path, output_path:Path):
+def histogram(path:Path, output_path:Path=None, show:bool=False, nbins:int=30):
     """
-    Generates a histogram of sequence lengths from a SeqBank and saves it to a file.
+    Generates a histogram of sequence lengths from a SeqBank and saves it to a file or displays it.
     """
     # Load the SeqBank
     seqbank = SeqBank(path=path)
 
     # Generate the histogram
-    fig: Figure = seqbank.plot_length_histogram()
+    fig: Figure = seqbank.plot_length_histogram(nbins=nbins)
 
     # Save the histogram to the specified output path
-    fig.write_image(output_path)
+    if output_path is None:
+        show = True
+    else:
+        fig.write_image(output_path)
+        print(f"Histogram saved to {output_path}")
 
-    print(f"Histogram saved to {output_path}")
+    if show:
+        fig.show()
+
