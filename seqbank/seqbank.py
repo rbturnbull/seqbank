@@ -8,7 +8,7 @@ import tempfile
 from pathlib import Path
 from joblib import Parallel, delayed
 import plotly.express as px
-from plotly.graph_objs import Figure
+import plotly.graph_objs as go
 # import zarr
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -369,7 +369,7 @@ class SeqBank():
             for accession in accessions:
                 SeqIO.write(self.record(accession), f, format)
 
-    def get_accession_lengths(self) -> dict:
+    def lengths_dict(self) -> dict[str, int]:
         """
         Returns a dictionary where the keys are the accessions and the values 
         are the corresponding lengths of each sequence.
@@ -377,19 +377,19 @@ class SeqBank():
         accession_lengths = {}
 
         for accession in self.get_accessions():
-            # Retrieve the sequence string using the string method
-            sequence = self.string(accession)
+            # Retrieve the sequence
+            sequence = self[accession]
             # Store the length of the sequence in the dictionary
             accession_lengths[accession] = len(sequence)
 
         return accession_lengths
     
-    def plot_length_histogram(self, nbins:int=30) -> Figure:
+    def histogram(self, nbins:int=30) -> go.Figure:
         """
         Creates a histogram of the lengths of all sequences and returns the Plotly figure object.
         """
         # Get the dictionary of accession lengths
-        accession_lengths = self.get_accession_lengths()
+        accession_lengths = self.lengths_dict()
 
         # Extract the lengths from the dictionary
         lengths = list(accession_lengths.values())
