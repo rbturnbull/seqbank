@@ -2,11 +2,10 @@ import tempfile
 from pathlib import Path
 import re
 
-from .io import download_file
+from .io import download_file, TemporaryDirectory
 
 def get_refseq_filenames(tmp_dir:str|Path|None=None):
-    tmp_dir = str(tmp_dir) if tmp_dir else None
-    with tempfile.TemporaryDirectory(prefix=tmp_dir) as dirname:
+    with TemporaryDirectory(prefix=tmp_dir) as dirname:
         local_path = Path(dirname) / 'refseq_complete.html'
 
         download_file("https://ftp.ncbi.nlm.nih.gov/refseq/release/complete/", local_path)

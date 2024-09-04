@@ -4,7 +4,6 @@ from functools import cached_property
 import numpy as np
 import gzip
 import time
-import tempfile
 from pathlib import Path
 from joblib import Parallel, delayed
 import plotly.express as px
@@ -23,7 +22,7 @@ from speedict import Rdict, Options, DBCompressionType, AccessType
 import atexit
 
 from .transform import seq_to_bytes, bytes_to_str
-from .io import get_file_format, open_path, download_file, seq_count
+from .io import get_file_format, open_path, download_file, seq_count, TemporaryDirectory
 from .exceptions import SeqBankError
 from .utils import parse_filter
 
@@ -174,8 +173,7 @@ class SeqBank():
         if url_key in self.file and not force:
             return False
         
-        tmp_dir = str(tmp_dir) if tmp_dir else None
-        with tempfile.TemporaryDirectory(prefix=tmp_dir) as tmpdirname:
+        with TemporaryDirectory(prefix=tmp_dir) as tmpdirname:
             local_path = Path(tmpdirname) / Path(url).name
             try:
                 download_file(url, local_path)

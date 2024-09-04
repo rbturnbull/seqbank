@@ -4,6 +4,7 @@ import gzip
 import bz2
 from Bio import SeqIO
 import requests
+import tempfile
 
 def open_path(path:Path|str):
     path = Path(path)
@@ -63,3 +64,11 @@ def download_file(url:str, local_path:Path):
     return local_path
 
 
+class TemporaryDirectory(tempfile.TemporaryDirectory):
+    def __init__(self, prefix:str|Path|None=None, *args, **kwargs):
+        if isinstance(prefix, Path):
+            # resolve path to string
+            prefix = str(prefix.resolve().absolute())
+            
+        super().__init__(prefix=prefix, *args, **kwargs)
+    
