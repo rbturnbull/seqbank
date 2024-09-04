@@ -7,6 +7,8 @@ import time
 import tempfile
 from pathlib import Path
 from joblib import Parallel, delayed
+import plotly.express as px
+import plotly.graph_objs as go
 # import zarr
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -367,4 +369,39 @@ class SeqBank():
             for accession in accessions:
                 SeqIO.write(self.record(accession), f, format)
 
+    def lengths_dict(self) -> dict[str, int]:
+        """
+        Returns a dictionary where the keys are the accessions and the values 
+        are the corresponding lengths of each sequence.
+        """
+        accession_lengths = {}
+
+        for accession in self.get_accessions():
+            # Retrieve the sequence
+            sequence = self[accession]
+            # Store the length of the sequence in the dictionary
+            accession_lengths[accession] = len(sequence)
+
+        return accession_lengths
     
+    def histogram(self, nbins: int = 30) -> go.Figure:
+        """
+        Creates a histogram of the lengths of all sequences and returns the Plotly figure object.
+        """
+        # Get the dictionary of accession lengths
+        accession_lengths = self.lengths_dict()
+
+        # Extract the lengths from the dictionary
+        lengths = list(accession_lengths.values())
+
+        # Create the histogram using Plotly Express
+        fig = px.histogram(lengths, nbins=nbins, title="Histogram of Sequence Lengths")
+        
+        # Add labels and customize the layout, removing the legend
+        fig.update_layout(
+            xaxis_title="Sequence Length",
+            yaxis_title="Count",
+            showlegend=False  # Remove the legend
+        )
+
+        return fig

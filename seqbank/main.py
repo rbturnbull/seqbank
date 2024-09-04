@@ -8,6 +8,8 @@ from .refseq import get_refseq_urls
 from .seqbank import SeqBank
 from .dfam import download_dfam
 
+import plotly.graph_objs as go
+
 app = typer.Typer()
 
 @app.command()
@@ -81,3 +83,25 @@ def export(path:Path, output:Path, format:str="fasta"):
     print(f"Exporting seqbank '{path}' to '{output}' in {format} format")
     seqbank = SeqBank(path=path)
     return seqbank.export(output, format=format)
+
+@app.command()
+def histogram(path:Path, output_path:Path=None, show:bool=False, nbins:int=30):
+    """
+    Generates a histogram of sequence lengths from a SeqBank and saves it to a file or displays it.
+    """
+    # Load the SeqBank
+    seqbank = SeqBank(path=path)
+
+    # Generate the histogram
+    fig: go.Figure = seqbank.histogram(nbins=nbins)
+
+    # Save the histogram to the specified output path
+    if output_path is None:
+        show = True
+    else:
+        fig.write_image(output_path)
+        print(f"Histogram saved to {output_path}")
+
+    if show:
+        fig.show()
+
