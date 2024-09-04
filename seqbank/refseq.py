@@ -4,8 +4,8 @@ import re
 
 from .io import download_file
 
-def get_refseq_filenames():
-    with tempfile.TemporaryDirectory() as dirname:
+def get_refseq_filenames(tmp_dir:str|Path|None=None):
+    with tempfile.TemporaryDirectory(prefix=tmp_dir) as dirname:
         local_path = Path(dirname) / 'refseq_complete.html'
 
         download_file("https://ftp.ncbi.nlm.nih.gov/refseq/release/complete/", local_path)
@@ -17,5 +17,5 @@ def get_refseq_filenames():
         return filenames
     
     
-def get_refseq_urls():
-    return [f"https://ftp.ncbi.nlm.nih.gov/refseq/release/complete/{filename}" for filename in get_refseq_filenames()]
+def get_refseq_urls(tmp_dir:str|Path|None=None):
+    return [f"https://ftp.ncbi.nlm.nih.gov/refseq/release/complete/{filename}" for filename in get_refseq_filenames(tmp_dir=tmp_dir)]

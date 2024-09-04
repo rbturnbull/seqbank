@@ -121,7 +121,7 @@ def test_url():
         assert result.exit_code == 0
         assert result.stdout == '/seqbank/url/http://example.com/NC_036113.1.fasta\nNC_036113.1\n'
 
-def mock_get_refseq_urls():
+def mock_get_refseq_urls(*args, **kwargs):
     return ["http://example.com/NC_036113.1.fasta", "http://example.com/NC_024664.1.trunc.fasta"]
 
 def test_refseq():

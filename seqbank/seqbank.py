@@ -169,12 +169,12 @@ class SeqBank():
         url_key = self.key_url(url)
         self.file[url_key] = bytes(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "ascii")
 
-    def add_url(self, url:str, progress=None, format:str="", force:bool=False, overall_task=None) -> bool:
+    def add_url(self, url:str, progress=None, format:str="", force:bool=False, overall_task=None, tmp_dir:str|Path|None=None) -> bool:
         url_key = self.key_url(url)
         if url_key in self.file and not force:
             return False
         
-        with tempfile.TemporaryDirectory() as tmpdirname:
+        with tempfile.TemporaryDirectory(prefix=tmp_dir) as tmpdirname:
             local_path = Path(tmpdirname) / Path(url).name
             try:
                 download_file(url, local_path)
@@ -296,7 +296,7 @@ class SeqBank():
             net_handle.close()
         return local_path
 
-    def add_urls(self, urls:List[str], max:int=0, format:str="", force:bool=False, workers:int=-1):
+    def add_urls(self, urls:List[str], max:int=0, format:str="", force:bool=False, workers:int=-1, tmp_dir:str|Path|None=None):
         # only add the URLs that haven't been seen before
         urls_to_add = []
         for url in urls:
@@ -311,7 +311,7 @@ class SeqBank():
             parallel = Parallel(n_jobs=workers, prefer="threads")
             add_url = delayed(self.add_url)
             overall_task = progress.add_task(f"[bold red]Adding URLs", total=len(urls_to_add))
-            parallel(add_url(url, progress=progress, format=format, force=force, overall_task=overall_task) for url in urls_to_add)
+            parallel(add_url(url, progress=progress, format=format, force=force, overall_task=overall_task, tmp_dir=tmp_dir) for url in urls_to_add)
 
     def ls(self):
         for k in self.file.keys():
