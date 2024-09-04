@@ -5,6 +5,7 @@ import re
 from .io import download_file
 
 def get_refseq_filenames(tmp_dir:str|Path|None=None):
+    tmp_dir = str(tmp_dir) if tmp_dir else None
     with tempfile.TemporaryDirectory(prefix=tmp_dir) as dirname:
         local_path = Path(dirname) / 'refseq_complete.html'
 

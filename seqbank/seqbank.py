@@ -174,6 +174,7 @@ class SeqBank():
         if url_key in self.file and not force:
             return False
         
+        tmp_dir = str(tmp_dir) if tmp_dir else None
         with tempfile.TemporaryDirectory(prefix=tmp_dir) as tmpdirname:
             local_path = Path(tmpdirname) / Path(url).name
             try:
