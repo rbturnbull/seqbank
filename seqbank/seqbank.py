@@ -174,7 +174,7 @@ class SeqBank():
             return False
         
         with TemporaryDirectory(prefix=tmp_dir) as tmpdirname:
-            local_path = Path(tmpdirname) / Path(url).name
+            local_path = tmpdirname / Path(url).name
             try:
                 download_file(url, local_path)
                 self.add_file(local_path, format=format, progress=progress, overall_task=overall_task)

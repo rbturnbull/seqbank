@@ -102,34 +102,29 @@ def test_download_file_no_data(dummy_url, dummy_local_path):
 
 def test_temporary_directory_with_default_prefix():
     with TemporaryDirectory() as tmp_dir:
-        tmp_dir_path = Path(tmp_dir)
         # Verify that the temporary directory exists
-        assert tmp_dir_path.exists()
+        assert tmp_dir.exists()
         # Verify it's a directory
-        assert tmp_dir_path.is_dir()
+        assert tmp_dir.is_dir()
         
     # Verify that after context exit, the directory is removed
-    assert not tmp_dir_path.exists()
+    assert not tmp_dir.exists()
+
 
 def test_temporary_directory_with_string_prefix():
     prefix = "test_prefix_"
     with TemporaryDirectory(prefix=prefix) as tmp_dir:
-        tmp_dir_path = Path(tmp_dir)
         # Check if the temporary directory starts with the provided prefix
-        assert tmp_dir_path.name.startswith(prefix)
+        assert tmp_dir.name.startswith(prefix)
 
 def test_temporary_directory_with_path_prefix():
     prefix = Path("test_prefix_path")
     with TemporaryDirectory(prefix=prefix) as tmp_dir:
-        tmp_dir_path = Path(tmp_dir)
         # Check if the temporary directory starts with the provided prefix
-        assert tmp_dir_path.name.startswith("test_prefix_path")
+        assert tmp_dir.parent == prefix.resolve().absolute()
 
 
 def test_temporary_directory_resolves_prefix_path():
     prefix = Path("../tmp")
     with TemporaryDirectory(prefix=prefix) as tmp_dir:
-        tmp_dir_path = Path(tmp_dir)
-        # Verify the prefix path is resolved to an absolute path as a string
-        resolved_prefix = str(prefix.resolve().absolute())
-        assert resolved_prefix in str(tmp_dir_path)
+        assert tmp_dir.parent == prefix.resolve().absolute()
