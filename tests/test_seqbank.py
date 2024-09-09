@@ -270,3 +270,33 @@ def test_missing_with_get(seqbank_with_data):
     
     # Since 'seq3' cannot be fetched, it should be reported as missing
     assert missing_accessions == {"seq3"}
+
+
+# Test setup
+@pytest.fixture
+def seqbank():
+    # Setup a temporary path for testing
+    temp_path = Path("temp_seqbank")
+    # Initialize SeqBank with the temporary path
+    return SeqBank(path=temp_path, write=True)
+
+@patch.object(SeqBank, 'download_accessions')
+def test_add_accessions(mock_download_accessions, seqbank):
+    # Prepare mock data
+    accessions = ['acc1', 'acc2', 'acc3']
+    base_dir = Path('test_base_dir')
+    email = 'test@example.com'
+    
+    # Mock the download_accessions method
+    mock_download_accessions.return_value = None
+    
+    # Call add_accessions
+    seqbank.add_accessions(accessions, base_dir=base_dir, email=email, batch_size=2)
+    
+    # Verify download_accessions was called correctly
+    assert mock_download_accessions.call_count == 2  # Check if it's called twice due to batch_size=2
+    
+    # Check if download_accessions was called correctly
+    mock_download_accessions.assert_called_with(
+        ['acc3'], base_dir=base_dir, email=email
+    )
