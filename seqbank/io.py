@@ -4,6 +4,7 @@ import gzip
 import bz2
 from Bio import SeqIO
 import requests
+import tempfile
 
 def open_path(path:Path|str):
     path = Path(path)
@@ -63,3 +64,28 @@ def download_file(url:str, local_path:Path):
     return local_path
 
 
+class TemporaryDirectory(tempfile.TemporaryDirectory):
+    def __init__(self, prefix: str | Path | None = None, *args, **kwargs):
+        self._created_dirs = []  # Track directories that were created
+        if isinstance(prefix, Path):
+            # resolve path to string
+            prefix.mkdir(parents=True, exist_ok=True)
+            self._created_dirs.append(prefix)  # Track created parent directories
+            
+            # Ensure prefix ends with a "/"
+            prefix = str(prefix.resolve().absolute())
+            if not prefix.endswith("/"):
+                prefix += "/"
+            
+        super().__init__(prefix=prefix, *args, **kwargs)
+
+    def cleanup(self):
+        # Call the parent cleanup to remove the temporary directory
+        super().cleanup()
+        # Remove any created directories if they are now empty
+        for created_dir in self._created_dirs:
+            if not any(created_dir.iterdir()):  # Only remove if the directory is empty
+                created_dir.rmdir()
+    
+    def __enter__(self):
+        return Path(super().__enter__())

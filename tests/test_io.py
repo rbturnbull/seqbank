@@ -1,10 +1,11 @@
-from seqbank.io import get_file_format, seq_count, download_file
 import pytest
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 from tempfile import NamedTemporaryFile
-from io import BytesIO
 import requests
+
+from seqbank.io import get_file_format, seq_count, download_file, TemporaryDirectory
+
 
 TEST_DATA_PATH = Path(__file__).parent / "testdata"
 
@@ -97,3 +98,33 @@ def test_download_file_no_data(dummy_url, dummy_local_path):
         with open(result_path, 'rb') as f:
             file_content = f.read()
             assert file_content == b""
+
+
+def test_temporary_directory_with_default_prefix():
+    with TemporaryDirectory() as tmp_dir:
+        # Verify that the temporary directory exists
+        assert tmp_dir.exists()
+        # Verify it's a directory
+        assert tmp_dir.is_dir()
+        
+    # Verify that after context exit, the directory is removed
+    assert not tmp_dir.exists()
+
+
+def test_temporary_directory_with_string_prefix():
+    prefix = "test_prefix_"
+    with TemporaryDirectory(prefix=prefix) as tmp_dir:
+        # Check if the temporary directory starts with the provided prefix
+        assert tmp_dir.name.startswith(prefix)
+
+def test_temporary_directory_with_path_prefix():
+    prefix = Path("test_prefix_path")
+    with TemporaryDirectory(prefix=prefix) as tmp_dir:
+        # Check if the temporary directory starts with the provided prefix
+        assert tmp_dir.parent == prefix.resolve().absolute()
+
+
+def test_temporary_directory_resolves_prefix_path():
+    prefix = Path("../tmp")
+    with TemporaryDirectory(prefix=prefix) as tmp_dir:
+        assert tmp_dir.parent == prefix.resolve().absolute()

@@ -8,6 +8,8 @@ from .refseq import get_refseq_urls
 from .seqbank import SeqBank
 from .dfam import download_dfam
 
+import plotly.graph_objs as go
+
 app = typer.Typer()
 
 @app.command()
@@ -19,12 +21,12 @@ def add(path:Path, files:List[Path], format:str="", filter:Path=None):
 
 
 @app.command()
-def url(path:Path, urls:List[str], format:str="", max:int=0, workers:int=-1):
+def url(path:Path, urls:List[str], format:str="", max:int=0, workers:int=-1, tmp_dir:Path=None):
     """ Add sequences from a URL to a seqbank """
     print(f"Opening seqbank '{path}'")
     seqbank = SeqBank(path=path, write=True)
     
-    seqbank.add_urls(urls, format=format, max=max, workers=workers)
+    seqbank.add_urls(urls, format=format, max=max, workers=workers, tmp_dir=tmp_dir)
 
 
 @app.command()
@@ -39,10 +41,10 @@ def delete(path:Path, accessions:List[str]):
 
 
 @app.command()
-def refseq(path:Path, max:int=0, workers:int=-1):
+def refseq(path:Path, max:int=0, workers:int=-1, tmp_dir:Path=None):
     """ Download all RefSeq sequences to a seqbank """    
     print("Getting RefSeq files list")
-    return url(path, get_refseq_urls(), max=max, workers=workers)
+    return url(path, get_refseq_urls(tmp_dir=tmp_dir), max=max, workers=workers, tmp_dir=tmp_dir)
 
 
 @app.command()
@@ -81,3 +83,25 @@ def export(path:Path, output:Path, format:str="fasta"):
     print(f"Exporting seqbank '{path}' to '{output}' in {format} format")
     seqbank = SeqBank(path=path)
     return seqbank.export(output, format=format)
+
+@app.command()
+def histogram(path:Path, output_path:Path=None, show:bool=False, nbins:int=30):
+    """
+    Generates a histogram of sequence lengths from a SeqBank and saves it to a file or displays it.
+    """
+    # Load the SeqBank
+    seqbank = SeqBank(path=path)
+
+    # Generate the histogram
+    fig: go.Figure = seqbank.histogram(nbins=nbins)
+
+    # Save the histogram to the specified output path
+    if output_path is None:
+        show = True
+    else:
+        fig.write_image(output_path)
+        print(f"Histogram saved to {output_path}")
+
+    if show:
+        fig.show()
+

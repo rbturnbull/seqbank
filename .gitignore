@@ -178,3 +178,4 @@ refseq/
 outputs/
 *.sb
 .DS_Store
+tests/testdata/tmp/*

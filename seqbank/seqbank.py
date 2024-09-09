@@ -4,9 +4,10 @@ from functools import cached_property
 import numpy as np
 import gzip
 import time
-import tempfile
 from pathlib import Path
 from joblib import Parallel, delayed
+import plotly.express as px
+import plotly.graph_objs as go
 # import zarr
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
@@ -21,7 +22,7 @@ from speedict import Rdict, Options, DBCompressionType, AccessType
 import atexit
 
 from .transform import seq_to_bytes, bytes_to_str
-from .io import get_file_format, open_path, download_file, seq_count
+from .io import get_file_format, open_path, download_file, seq_count, TemporaryDirectory
 from .exceptions import SeqBankError
 from .utils import parse_filter
 
@@ -36,11 +37,6 @@ class SeqBank():
         self.path = Path(self.path).expanduser()
         if not self.write and not self.path.exists():
             raise FileNotFoundError(f"Cannot find SeqBank file at path: {self.path}")
-    
-    def __getstate__(self):
-        # Only returns required elements
-        # Needed because h5 files cannot be pickled
-        return dict(path=self.path)
 
     def key(self, accession:str) -> str:
         return bytes(accession, "ascii")
@@ -172,13 +168,13 @@ class SeqBank():
         url_key = self.key_url(url)
         self.file[url_key] = bytes(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "ascii")
 
-    def add_url(self, url:str, progress=None, format:str="", force:bool=False, overall_task=None) -> bool:
+    def add_url(self, url:str, progress=None, format:str="", force:bool=False, overall_task=None, tmp_dir:str|Path|None=None) -> bool:
         url_key = self.key_url(url)
         if url_key in self.file and not force:
             return False
         
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            local_path = Path(tmpdirname) / Path(url).name
+        with TemporaryDirectory(prefix=tmp_dir) as tmpdirname:
+            local_path = tmpdirname / Path(url).name
             try:
                 download_file(url, local_path)
                 self.add_file(local_path, format=format, progress=progress, overall_task=overall_task)
@@ -299,7 +295,7 @@ class SeqBank():
             net_handle.close()
         return local_path
 
-    def add_urls(self, urls:List[str], max:int=0, format:str="", force:bool=False, workers:int=-1):
+    def add_urls(self, urls:List[str], max:int=0, format:str="", force:bool=False, workers:int=-1, tmp_dir:str|Path|None=None):
         # only add the URLs that haven't been seen before
         urls_to_add = []
         for url in urls:
@@ -314,7 +310,7 @@ class SeqBank():
             parallel = Parallel(n_jobs=workers, prefer="threads")
             add_url = delayed(self.add_url)
             overall_task = progress.add_task(f"[bold red]Adding URLs", total=len(urls_to_add))
-            parallel(add_url(url, progress=progress, format=format, force=force, overall_task=overall_task) for url in urls_to_add)
+            parallel(add_url(url, progress=progress, format=format, force=force, overall_task=overall_task, tmp_dir=tmp_dir) for url in urls_to_add)
 
     def ls(self):
         for k in self.file.keys():
@@ -372,4 +368,39 @@ class SeqBank():
             for accession in accessions:
                 SeqIO.write(self.record(accession), f, format)
 
+    def lengths_dict(self) -> dict[str, int]:
+        """
+        Returns a dictionary where the keys are the accessions and the values 
+        are the corresponding lengths of each sequence.
+        """
+        accession_lengths = {}
+
+        for accession in self.get_accessions():
+            # Retrieve the sequence
+            sequence = self[accession]
+            # Store the length of the sequence in the dictionary
+            accession_lengths[accession] = len(sequence)
+
+        return accession_lengths
     
+    def histogram(self, nbins: int = 30) -> go.Figure:
+        """
+        Creates a histogram of the lengths of all sequences and returns the Plotly figure object.
+        """
+        # Get the dictionary of accession lengths
+        accession_lengths = self.lengths_dict()
+
+        # Extract the lengths from the dictionary
+        lengths = list(accession_lengths.values())
+
+        # Create the histogram using Plotly Express
+        fig = px.histogram(lengths, nbins=nbins, title="Histogram of Sequence Lengths")
+        
+        # Add labels and customize the layout, removing the legend
+        fig.update_layout(
+            xaxis_title="Sequence Length",
+            yaxis_title="Count",
+            showlegend=False  # Remove the legend
+        )
+
+        return fig
