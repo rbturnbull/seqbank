@@ -255,6 +255,19 @@ def test_items():
         assert key in result
         assert np.array_equal(result[key], expected_array)
 
+def test_delete_key_error():
+    # Initialize MockSeqBank with a mock file
+    mock_seqbank = MockSeqBank(path=Path('mock.sb'), write=False)
+    
+    # Mock the file to simulate it contains only valid_key
+    mock_seqbank.file = {'valid_key': np.array([0, 1, 2, 3], dtype="u1")}
+    
+    # Try deleting a key that does not exist in the mock file (this should raise a KeyError)
+    invalid_key = 'invalid_key'
+    
+    # Call delete and ensure it doesn't raise an exception (even with KeyError inside the method)
+    mock_seqbank.delete(invalid_key)
+
 @pytest.fixture
 def seqbank_with_data(tmp_path):
     """Fixture to set up a SeqBank instance with some predefined data."""
