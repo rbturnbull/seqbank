@@ -24,7 +24,6 @@ def test_seqbank_add_file():
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
         seqbank = SeqBank(path=tmpdirname/"seqbank.sb", write=True)
-        # seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb", write=True)
 
         seqbank.add_file(TEST_DATA_PATH/"NC_024664.1.trunc.fasta")
         assert "NC_024664.1" in seqbank
@@ -44,6 +43,48 @@ def test_seqbank_add_file():
 
         seqbank.add_file(TEST_DATA_PATH/"NC_036113.1.fasta")
         assert len(seqbank["NC_036113.1"]) == 1050
+
+def test_seqbank_add_file_fasta_with_filter_skip():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        seqbank = SeqBank(path=tmpdirname/"seqbank.sb", write=True)
+        
+        # Create a filter that excludes 'NC_024664.1' to ensure it's skipped
+        filter_set = {"NC_036113.1"}  # 'NC_036113.1' is in the filter, but 'NC_024664.1' is not
+        
+        # Add a fasta file
+        seqbank.add_file(TEST_DATA_PATH/"NC_024664.1.trunc.fasta", filter=filter_set)
+        
+        # Assert that 'NC_024664.1' was skipped (since it's not in the filter)
+        assert "NC_024664.1" not in seqbank
+        
+        # Add another file with an accession in the filter
+        seqbank.add_file(TEST_DATA_PATH/"NC_036113.1.fasta", filter=filter_set)
+        
+        # Assert that 'NC_036113.1' was added
+        assert "NC_036113.1" in seqbank
+        assert len(seqbank["NC_036113.1"]) == 1050
+
+def test_seqbank_add_file_genbank_with_filter_skip():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        seqbank = SeqBank(path=tmpdirname/"seqbank.sb", write=True)
+        
+        # Create a filter that excludes 'NC_010663.1' to ensure it's skipped
+        filter_set = {"NC_036112.1"}  # 'NC_036112.1' is in the filter, but 'NC_010663.1' is not
+        
+        # Add a genbank file
+        seqbank.add_file(TEST_DATA_PATH/"NC_010663.1.gb", format="genbank", filter=filter_set)
+        
+        # Assert that 'NC_010663.1' was skipped (since it's not in the filter)
+        assert "NC_010663.1" not in seqbank
+        
+        # Add another file with a record ID in the filter
+        seqbank.add_file(TEST_DATA_PATH/"NC_036112.1.fasta", filter=filter_set)
+        
+        # Assert that 'NC_036112.1' was added
+        assert "NC_036112.1" in seqbank
+        assert len(seqbank["NC_036112.1"]) == 980
 
         
 def test_record():
