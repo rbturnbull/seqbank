@@ -210,6 +210,22 @@ def test_get_item_raises_exception():
     with pytest.raises(SeqBankError, match=f"Failed to read {invalid_key} in SeqBank {mock_seqbank.path}"):
         result = mock_seqbank[invalid_key]  # This should trigger an exception
 
+def test_contains_handles_exception():
+    # Initialize MockSeqBank with a mock file
+    mock_seqbank = MockSeqBank(path=Path('mock.sb'), write=False)
+    
+    # Mock an invalid scenario (e.g., accessing a nonexistent file)
+    mock_seqbank.file = None  # Simulate a case where self.file is invalid
+    
+    # Use an arbitrary accession key, since it should trigger an exception due to mock_seqbank.file being None
+    accession = "invalid_accession"
+    
+    # Call __contains__ and expect it to return False when an exception occurs
+    result = accession in mock_seqbank
+    
+    # Assert that the result is False as expected
+    assert result is False
+
 # Mock SeqBank for testing
 class MockSeqBankForItems(SeqBank):
     def __init__(self, path: Path, write: bool = False):
