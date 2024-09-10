@@ -8,7 +8,6 @@ from pathlib import Path
 from joblib import Parallel, delayed
 import plotly.express as px
 import plotly.graph_objs as go
-# import zarr
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
@@ -17,7 +16,6 @@ from rich.progress import track
 import pyfastx
 from rich.progress import Progress, TimeElapsedColumn, MofNCompleteColumn
 from datetime import datetime
-# from rocksdict import Rdict, Options
 from speedict import Rdict, Options, DBCompressionType, AccessType
 import atexit
 
@@ -54,7 +52,6 @@ class SeqBank():
     def file(self):
         options = Options(raw_mode=True)
         options.set_compression_type(DBCompressionType.none())
-        # options.set_cache_index_and_filter_blocks(True)
         options.set_optimize_filters_for_hits(True)
         options.optimize_for_point_lookup(1024)
         options.set_max_open_files(500)
@@ -67,14 +64,6 @@ class SeqBank():
 
         atexit.register(self.close)
         return self._db
-        
-        # For zarr
-        # store = zarr.DBMStore(self.path, open=dbm.gnu.open)
-        # store = zarr.ZipStore(self.path, mode='a')
-        # return zarr.open(store, mode='a')
-        
-        # For h5py
-        # return h5py.File(self.path, "a", libver='latest')
 
     def __len__(self):
         count = 0
@@ -88,7 +77,6 @@ class SeqBank():
             key = self.key(accession)
             file = self.file
             return file[key]
-            # return np.frombuffer(file[key], dtype="u1")
         except Exception as err:
             raise SeqBankError(f"Failed to read {accession} in SeqBank {self.path}:\n{err}")
 
@@ -110,8 +98,6 @@ class SeqBank():
 
     def add(self, seq:Union[str, Seq, SeqRecord, np.ndarray], accession:str) -> None:
         key = self.key(accession)
-        # if key in self.file:
-        #     return
         
         if isinstance(seq, SeqRecord):
             seq = seq.seq
@@ -120,7 +106,6 @@ class SeqBank():
         if isinstance(seq, str):
             seq = seq_to_bytes(seq)
         
-        # seq = compress(seq, self.compression)
         self.file[key] = seq
 
     def add_file(self, path:Path, format:str="", progress=None, overall_task=None, filter:Path|list|set|None=None) -> None:
@@ -251,9 +236,6 @@ class SeqBank():
                 to_download = []
         
         self.download_accessions(to_download, base_dir=base_dir, email=email)
-            # fasta_path = self.individual_accession_path(accession, base_dir=base_dir, email=email)
-            # if fasta_path:
-            #     self.add_file(fasta_path)
 
     def individual_accession_path(self, accession: str, base_dir:Path, download: bool = True, email=None) -> Path:
         local_path = base_dir / f"{accession}.fa.gz"
