@@ -179,3 +179,4 @@ outputs/
 *.sb
 .DS_Store
 tests/testdata/tmp/*
+/temp_seqbank
