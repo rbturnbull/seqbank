@@ -134,14 +134,10 @@ def test_close():
         
         # Verify that no exceptions are raised during the close
         try:
-            # Try accessing the database after closing it
-            seqbank.file
-            assert False, "Expected an exception when accessing the file after closing"
+            seqbank.close()
         except Exception:
-            pass
+            assert False, "Exception raised during close when it should not be"
         
-        # Since we are not interacting with the actual file system in the test,
-        # we cannot directly check the closed state. We can only assert that no errors occur.
 
 def test_file_not_found_error():
     # Test when the file does not exist
