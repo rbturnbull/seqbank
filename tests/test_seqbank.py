@@ -430,3 +430,18 @@ def test_add_accessions(mock_download_accessions, seqbank):
     mock_download_accessions.assert_called_with(
         ['acc3'], base_dir=base_dir, email=email
     )
+
+def test_add_url_existing_url_no_force():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        seqbank = SeqBank(path=tmpdirname/"seqbank.sb", write=True)
+        
+        # Mocking the file to include the URL
+        seqbank.file = {seqbank.key_url("http://example.com/file.fasta"): np.array([1, 2, 3], dtype="u1")}
+        
+        # Call add_url with the URL already present in the file and force=False
+        result = seqbank.add_url("http://example.com/file.fasta", force=False)
+        
+        # Assert that the URL was not processed again
+        assert not result
+
