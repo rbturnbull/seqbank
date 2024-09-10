@@ -445,3 +445,25 @@ def test_add_url_existing_url_no_force():
         # Assert that the URL was not processed again
         assert not result
 
+def test_add_url_exception_handling():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        seqbank = SeqBank(path=tmpdirname/"seqbank.sb", write=True)
+
+        # Use patch to mock download_file to raise an exception
+        with patch('seqbank.seqbank.download_file') as mock_download_file:
+            mock_download_file.side_effect = Exception("Download failed")
+
+            result = seqbank.add_url("http://example.com/file.fasta", tmp_dir=tmpdirname)
+            
+            # Assert that the exception was handled and False was returned
+            assert not result
+            
+            # Verify the download_file was called with the expected arguments
+            expected_local_path = tmpdirname / Path("file.fasta")
+            # Get the actual call arguments
+            actual_call_args = mock_download_file.call_args[0]
+
+            # Extract and assert the URL and local path
+            assert actual_call_args[0] == "http://example.com/file.fasta"
+            assert actual_call_args[1].name == "file.fasta"  # Check if filename matches
