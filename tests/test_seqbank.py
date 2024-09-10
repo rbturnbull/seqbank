@@ -495,3 +495,35 @@ def test_missing_exception_handling():
             # Check that 'missing_accession' is in missing (not present in mock)
             assert "missing_accession" in missing_accessions
 
+@pytest.fixture
+def seqbank():
+    # Create a mock SeqBank instance
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        seqbank = SeqBank(path=Path(tmpdirname) / "seqbank.sb", write=True)
+        return seqbank
+
+@patch.object(SeqBank, 'add_url')
+@patch('joblib.Parallel')
+@patch('joblib.delayed')
+def test_add_urls_max(mock_delayed, mock_parallel, mock_add_url, seqbank):
+    # Prepare mock data
+    urls = [f'http://example.com/file{i}.fasta' for i in range(10)]  # 10 URLs
+    max_urls = 5  # Limit to 5 URLs
+    format = "fasta"
+    force = False
+    workers = 2
+    tmp_dir = None
+
+    # Mock the delayed function and parallel execution
+    mock_delayed.return_value = lambda x: x
+    mock_parallel.return_value = []
+
+    # Call add_urls
+    seqbank.add_urls(urls, max=max_urls, format=format, force=force, workers=workers, tmp_dir=tmp_dir)
+
+    # Verify add_url is called only for the first `max_urls` URLs
+    assert mock_add_url.call_count == max_urls
+
+    # Check the URLs that were passed to add_url
+    called_urls = [call[0][0] for call in mock_add_url.call_args_list]
+    assert called_urls == urls[:max_urls]
