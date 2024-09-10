@@ -106,12 +106,7 @@ class SeqBank():
         key = self.key(accession)
         f = self.file
         if key in f:
-            try:
-                del f[key]
-            except KeyError:
-                # f.create_dataset(key, "") # replace data in case there is a problem with it
-                # f[key] = "" 
-                del f[key]
+            del f[key]
 
     def add(self, seq:Union[str, Seq, SeqRecord, np.ndarray], accession:str) -> None:
         key = self.key(accession)
