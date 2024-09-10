@@ -235,7 +235,8 @@ class SeqBank():
                 time.sleep(sleep)
                 to_download = []
         
-        self.download_accessions(to_download, base_dir=base_dir, email=email)
+        if to_download:
+            self.download_accessions(to_download, base_dir=base_dir, email=email)
 
     def individual_accession_path(self, accession: str, base_dir:Path, download: bool = True, email=None) -> Path:
         local_path = base_dir / f"{accession}.fa.gz"
