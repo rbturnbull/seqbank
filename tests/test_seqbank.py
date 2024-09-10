@@ -404,14 +404,16 @@ def test_histogram(setup_seqbank):
 
 # Test setup
 @pytest.fixture
-def seqbank():
-    # Setup a temporary path for testing
-    temp_path = Path("temp_seqbank")
-    # Initialize SeqBank with the temporary path
-    return SeqBank(path=temp_path, write=True)
+def seqbank_for_add():
+    # Create a mock SeqBank instance
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        seqbank = SeqBank(path=Path(tmpdirname) / "seqbank_mock.sb", write=True)
+        # Prepopulate the SeqBank with some accessions
+        seqbank.file = {'acc1': np.array([0, 1, 2, 3], dtype="u1")}
+        return seqbank
 
 @patch.object(SeqBank, 'download_accessions')
-def test_add_accessions(mock_download_accessions, seqbank):
+def test_add_accessions(mock_download_accessions, seqbank_for_add):
     # Prepare mock data
     accessions = ['acc1', 'acc2', 'acc3']
     base_dir = Path('test_base_dir')
@@ -421,7 +423,7 @@ def test_add_accessions(mock_download_accessions, seqbank):
     mock_download_accessions.return_value = None
     
     # Call add_accessions
-    seqbank.add_accessions(accessions, base_dir=base_dir, email=email, batch_size=2)
+    seqbank_for_add.add_accessions(accessions, base_dir=base_dir, email=email, batch_size=2)
     
     # Verify download_accessions was called correctly
     assert mock_download_accessions.call_count == 2  # Check if it's called twice due to batch_size=2
@@ -430,6 +432,7 @@ def test_add_accessions(mock_download_accessions, seqbank):
     mock_download_accessions.assert_called_with(
         ['acc3'], base_dir=base_dir, email=email
     )
+
 
 def test_add_url_existing_url_no_force():
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -467,3 +470,28 @@ def test_add_url_exception_handling():
             # Extract and assert the URL and local path
             assert actual_call_args[0] == "http://example.com/file.fasta"
             assert actual_call_args[1].name == "file.fasta"  # Check if filename matches
+
+def test_missing_exception_handling():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        seqbank = SeqBank(path=tmpdirname / "seqbank.sb", write=True)
+
+        # Define the mock behavior
+        def mock_getitem(accession):
+            if accession == "faulty_accession":
+                raise ValueError("Data retrieval error")
+            elif accession == "valid_accession":
+                return np.array([0, 1, 2, 3], dtype="u1")
+            # Simulate the case where accessions are not found
+            raise KeyError("Accession not found")
+        
+        with patch.object(seqbank, '__getitem__', side_effect=mock_getitem):
+            accessions = ["valid_accession", "faulty_accession", "missing_accession"]
+            missing_accessions = seqbank.missing(accessions, get=True)
+            
+            # Check that 'faulty_accession' is in missing due to exception
+            assert "faulty_accession" in missing_accessions
+            
+            # Check that 'missing_accession' is in missing (not present in mock)
+            assert "missing_accession" in missing_accessions
+
