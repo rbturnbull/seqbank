@@ -153,6 +153,33 @@ def test_export_tsv_with_accessions():
         assert 'NC_024664.1\tTAAAAAGAAAAA' in text
         assert 'NC_010663.1\tAGTTTTAAAC' in text
 
+@pytest.fixture
+def prepare_accession_file():
+    # Create a temporary file with a list of accessions
+    with tempfile.NamedTemporaryFile(delete=False, mode='w') as f:
+        f.write("NC_024664.1\nNZ_JAJNFP010000161.1\nNC_010663.1\n")
+        accession_file = Path(f.name)
+    yield accession_file
+    # Clean up
+    accession_file.unlink()
+
+def test_export_from_file(prepare_accession_file):
+    seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        exported_path = tmpdirname/"exported.fasta"
+
+        # Export using the file with accessions
+        seqbank.export(exported_path, accessions=prepare_accession_file)
+
+        # Validate the exported file
+        assert exported_path.exists()
+        text = exported_path.read_text()
+        assert ">NC_024664.1\nTAAAAAGAAAAAAATTTT" in text
+        assert ">NZ_JAJNFP010000161.1\nTAATATTTGCTTTCATTTCTAAATAG" in text
+        assert ">NC_010663.1\nAGTTTTAAACCTCTGATCGAAC" in text
+        assert len(text) > 100  # Adjust the length check based on actual content
 
 def test_get_acccessions():
     seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
