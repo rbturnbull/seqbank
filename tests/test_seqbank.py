@@ -200,6 +200,16 @@ def test_get_item_successful_retrieval():
     # Assert that the result matches the expected data
     assert np.array_equal(result, expected_result)
 
+def test_get_item_raises_exception():
+    # Initialize MockSeqBank with a mock file (that doesn't contain the invalid key)
+    mock_seqbank = MockSeqBank(path=Path('mock.sb'), write=False)
+    
+    # Attempt to retrieve data using an invalid key (which should raise an exception)
+    invalid_key = 'invalid_key'
+    
+    with pytest.raises(SeqBankError, match=f"Failed to read {invalid_key} in SeqBank {mock_seqbank.path}"):
+        result = mock_seqbank[invalid_key]  # This should trigger an exception
+
 # Mock SeqBank for testing
 class MockSeqBankForItems(SeqBank):
     def __init__(self, path: Path, write: bool = False):
