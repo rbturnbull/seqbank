@@ -168,48 +168,11 @@ class SeqBank():
     def get_accessions(self) -> set:
         accessions = set()
         file = self.file
-        main_keys = file.keys()
         for key in file.keys():
             accession = key.decode("ascii")
             if not accession.startswith("/seqbank/"):
                 accessions.update([accession])
         return accessions
-
-    def download_accessions(self, accessions, base_dir:Path, email:str=None):
-        base_dir.mkdir(exist_ok=True, parents=True)
-        local_path = base_dir / "downloaded.fa.gz"
-
-        from Bio import Entrez
-
-        if email:
-            Entrez.email = email
-        else:
-            raise Exception("no email provided")
-
-        print(f"Trying to download '{accessions}'")
-        accessions_str = ",".join(accessions)
-        try:
-            print("trying nucleotide database")
-            net_handle = Entrez.efetch(db="nucleotide", id=accessions_str, rettype="fasta", retmode="text")
-        except Exception as err:
-            print(f'failed {err}')
-            print("trying genome database")
-            time.sleep(3)
-            try:
-                net_handle = Entrez.efetch(db="genome", id=accessions_str, rettype="fasta", retmode="text")
-            except Exception as err:
-                print(f'failed {err}')
-                print("trying nuccore database")
-                try:
-                    net_handle = Entrez.efetch(db="nuccore", id=accessions_str, rettype="fasta", retmode="text")
-                except:
-                    print(f'failed {err}')
-                    return None
-
-        with gzip.open(local_path, "wt") as f:
-            f.write(net_handle.read())
-        net_handle.close()
-        self.add_file(local_path)
 
     def missing(self, accessions, get:bool=False) -> set:
         missing = set()
@@ -222,56 +185,6 @@ class SeqBank():
                 except Exception:
                     missing.add(accession)
         return missing
-
-    def add_accessions(self, accessions, base_dir:Path, email:str=None, batch_size=200, sleep:float=1.0):
-        to_download = []
-        for accession in track(accessions):
-            if accession in self:
-                continue
-
-            to_download.append(accession)
-            if len(to_download) >= batch_size:
-                self.download_accessions(to_download, base_dir=base_dir, email=email)
-                time.sleep(sleep)
-                to_download = []
-        
-        if to_download:
-            self.download_accessions(to_download, base_dir=base_dir, email=email)
-
-    def individual_accession_path(self, accession: str, base_dir:Path, download: bool = True, email=None) -> Path:
-        local_path = base_dir / f"{accession}.fa.gz"
-        local_path.parent.mkdir(exist_ok=True, parents=True)
-        if download and not local_path.exists():
-            from Bio import Entrez
-
-            if email:
-                Entrez.email = email
-            else:
-                raise Exception("no email provided")
-
-            print(f"Trying to download '{accession}'")
-            try:
-                print("trying nucleotide database")
-                net_handle = Entrez.efetch(db="nucleotide", id=accession, rettype="fasta", retmode="text")
-            except Exception as err:
-                print(f'failed {err}')
-                print("trying genome database")
-                time.sleep(1)
-                try:
-                    net_handle = Entrez.efetch(db="genome", id=accession, rettype="fasta", retmode="text")
-                except Exception as err:
-                    print(f'failed {err}')
-                    print("trying nuccore database")
-                    try:
-                        net_handle = Entrez.efetch(db="nuccore", id=accession, rettype="fasta", retmode="text")
-                    except:
-                        print(f'failed {err}')
-                        return None
-
-            with gzip.open(local_path, "wt") as f:
-                f.write(net_handle.read())
-            net_handle.close()
-        return local_path
 
     def add_urls(self, urls:List[str], max:int=0, format:str="", force:bool=False, workers:int=-1, tmp_dir:str|Path|None=None):
         # only add the URLs that haven't been seen before

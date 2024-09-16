@@ -439,27 +439,6 @@ def seqbank_for_add():
         seqbank.file = {'acc1': np.array([0, 1, 2, 3], dtype="u1")}
         return seqbank
 
-@patch.object(SeqBank, 'download_accessions')
-def test_add_accessions(mock_download_accessions, seqbank_for_add):
-    # Prepare mock data
-    accessions = ['acc1', 'acc2', 'acc3']
-    base_dir = Path('test_base_dir')
-    email = 'test@example.com'
-    
-    # Mock the download_accessions method
-    mock_download_accessions.return_value = None
-    
-    # Call add_accessions
-    seqbank_for_add.add_accessions(accessions, base_dir=base_dir, email=email, batch_size=2)
-    
-    # Verify download_accessions was called correctly
-    assert mock_download_accessions.call_count == 2  # Check if it's called twice due to batch_size=2
-    
-    # Check if download_accessions was called correctly
-    mock_download_accessions.assert_called_with(
-        ['acc3'], base_dir=base_dir, email=email
-    )
-
 
 def test_add_url_existing_url_no_force():
     with tempfile.TemporaryDirectory() as tmpdirname:
