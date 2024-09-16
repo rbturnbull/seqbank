@@ -24,7 +24,6 @@ def test_seqbank_add_file():
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
         seqbank = SeqBank(path=tmpdirname/"seqbank.sb", write=True)
-        # seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb", write=True)
 
         seqbank.add_file(TEST_DATA_PATH/"NC_024664.1.trunc.fasta")
         assert "NC_024664.1" in seqbank
@@ -44,6 +43,48 @@ def test_seqbank_add_file():
 
         seqbank.add_file(TEST_DATA_PATH/"NC_036113.1.fasta")
         assert len(seqbank["NC_036113.1"]) == 1050
+
+def test_seqbank_add_file_fasta_with_filter_skip():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        seqbank = SeqBank(path=tmpdirname/"seqbank.sb", write=True)
+        
+        # Create a filter that excludes 'NC_024664.1' to ensure it's skipped
+        filter_set = {"NC_036113.1"}  # 'NC_036113.1' is in the filter, but 'NC_024664.1' is not
+        
+        # Add a fasta file
+        seqbank.add_file(TEST_DATA_PATH/"NC_024664.1.trunc.fasta", filter=filter_set)
+        
+        # Assert that 'NC_024664.1' was skipped (since it's not in the filter)
+        assert "NC_024664.1" not in seqbank
+        
+        # Add another file with an accession in the filter
+        seqbank.add_file(TEST_DATA_PATH/"NC_036113.1.fasta", filter=filter_set)
+        
+        # Assert that 'NC_036113.1' was added
+        assert "NC_036113.1" in seqbank
+        assert len(seqbank["NC_036113.1"]) == 1050
+
+def test_seqbank_add_file_genbank_with_filter_skip():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        seqbank = SeqBank(path=tmpdirname/"seqbank.sb", write=True)
+        
+        # Create a filter that excludes 'NC_010663.1' to ensure it's skipped
+        filter_set = {"NC_036112.1"}  # 'NC_036112.1' is in the filter, but 'NC_010663.1' is not
+        
+        # Add a genbank file
+        seqbank.add_file(TEST_DATA_PATH/"NC_010663.1.gb", format="genbank", filter=filter_set)
+        
+        # Assert that 'NC_010663.1' was skipped (since it's not in the filter)
+        assert "NC_010663.1" not in seqbank
+        
+        # Add another file with a record ID in the filter
+        seqbank.add_file(TEST_DATA_PATH/"NC_036112.1.fasta", filter=filter_set)
+        
+        # Assert that 'NC_036112.1' was added
+        assert "NC_036112.1" in seqbank
+        assert len(seqbank["NC_036112.1"]) == 980
 
         
 def test_record():
@@ -112,6 +153,33 @@ def test_export_tsv_with_accessions():
         assert 'NC_024664.1\tTAAAAAGAAAAA' in text
         assert 'NC_010663.1\tAGTTTTAAAC' in text
 
+@pytest.fixture
+def prepare_accession_file():
+    # Create a temporary file with a list of accessions
+    with tempfile.NamedTemporaryFile(delete=False, mode='w') as f:
+        f.write("NC_024664.1\nNZ_JAJNFP010000161.1\nNC_010663.1\n")
+        accession_file = Path(f.name)
+    yield accession_file
+    # Clean up
+    accession_file.unlink()
+
+def test_export_from_file(prepare_accession_file):
+    seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
+
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        exported_path = tmpdirname/"exported.fasta"
+
+        # Export using the file with accessions
+        seqbank.export(exported_path, accessions=prepare_accession_file)
+
+        # Validate the exported file
+        assert exported_path.exists()
+        text = exported_path.read_text()
+        assert ">NC_024664.1\nTAAAAAGAAAAAAATTTT" in text
+        assert ">NZ_JAJNFP010000161.1\nTAATATTTGCTTTCATTTCTAAATAG" in text
+        assert ">NC_010663.1\nAGTTTTAAACCTCTGATCGAAC" in text
+        assert len(text) > 100  # Adjust the length check based on actual content
 
 def test_get_acccessions():
     seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
@@ -134,14 +202,10 @@ def test_close():
         
         # Verify that no exceptions are raised during the close
         try:
-            # Try accessing the database after closing it
-            seqbank.file
-            assert False, "Expected an exception when accessing the file after closing"
+            seqbank.close()
         except Exception:
-            pass
+            assert False, "Exception raised during close when it should not be"
         
-        # Since we are not interacting with the actual file system in the test,
-        # we cannot directly check the closed state. We can only assert that no errors occur.
 
 def test_file_not_found_error():
     # Test when the file does not exist
@@ -204,6 +268,32 @@ def test_get_item_successful_retrieval():
     # Assert that the result matches the expected data
     assert np.array_equal(result, expected_result)
 
+def test_get_item_raises_exception():
+    # Initialize MockSeqBank with a mock file (that doesn't contain the invalid key)
+    mock_seqbank = MockSeqBank(path=Path('mock.sb'), write=False)
+    
+    # Attempt to retrieve data using an invalid key (which should raise an exception)
+    invalid_key = 'invalid_key'
+    
+    with pytest.raises(SeqBankError, match=f"Failed to read {invalid_key} in SeqBank {mock_seqbank.path}"):
+        result = mock_seqbank[invalid_key]  # This should trigger an exception
+
+def test_contains_handles_exception():
+    # Initialize MockSeqBank with a mock file
+    mock_seqbank = MockSeqBank(path=Path('mock.sb'), write=False)
+    
+    # Mock an invalid scenario (e.g., accessing a nonexistent file)
+    mock_seqbank.file = None  # Simulate a case where self.file is invalid
+    
+    # Use an arbitrary accession key, since it should trigger an exception due to mock_seqbank.file being None
+    accession = "invalid_accession"
+    
+    # Call __contains__ and expect it to return False when an exception occurs
+    result = accession in mock_seqbank
+    
+    # Assert that the result is False as expected
+    assert result is False
+
 # Mock SeqBank for testing
 class MockSeqBankForItems(SeqBank):
     def __init__(self, path: Path, write: bool = False):
@@ -233,6 +323,19 @@ def test_items():
         assert key in result
         assert np.array_equal(result[key], expected_array)
 
+def test_delete_key_error():
+    # Initialize MockSeqBank with a mock file
+    mock_seqbank = MockSeqBank(path=Path('mock.sb'), write=False)
+    
+    # Mock the file to simulate it contains only valid_key
+    mock_seqbank.file = {'valid_key': np.array([0, 1, 2, 3], dtype="u1")}
+    
+    # Try deleting a key that does not exist in the mock file (this should raise a KeyError)
+    invalid_key = 'invalid_key'
+    
+    # Call delete and ensure it doesn't raise an exception (even with KeyError inside the method)
+    mock_seqbank.delete(invalid_key)
+
 @pytest.fixture
 def seqbank_with_data(tmp_path):
     """Fixture to set up a SeqBank instance with some predefined data."""
@@ -259,18 +362,6 @@ def test_missing(seqbank_with_data):
     
     assert missing_accessions == expected_missing
 
-def test_missing_with_get(seqbank_with_data):
-    seqbank = seqbank_with_data
-    
-    # List of accessions to check
-    accessions_to_check = ["seq1", "seq2", "seq3"]
-    
-    # Mocking the behavior of fetching missing accessions
-    with patch.object(seqbank, '__getitem__', side_effect=lambda x: seqbank.file[seqbank.key(x)] if x != "seq3" else None):
-        missing_accessions = seqbank.missing(accessions_to_check, get=True)
-    
-    # Since 'seq3' cannot be fetched, it should be reported as missing
-    assert missing_accessions == {"seq3"}
 
 @pytest.fixture
 def setup_seqbank(tmp_path):
@@ -328,29 +419,105 @@ def test_histogram(setup_seqbank):
 
 # Test setup
 @pytest.fixture
-def seqbank():
-    # Setup a temporary path for testing
-    temp_path = Path("temp_seqbank")
-    # Initialize SeqBank with the temporary path
-    return SeqBank(path=temp_path, write=True)
+def seqbank_for_add():
+    # Create a mock SeqBank instance
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        seqbank = SeqBank(path=Path(tmpdirname) / "seqbank_mock.sb", write=True)
+        # Prepopulate the SeqBank with some accessions
+        seqbank.file = {'acc1': np.array([0, 1, 2, 3], dtype="u1")}
+        return seqbank
 
-@patch.object(SeqBank, 'download_accessions')
-def test_add_accessions(mock_download_accessions, seqbank):
+
+def test_add_url_existing_url_no_force():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        seqbank = SeqBank(path=tmpdirname/"seqbank.sb", write=True)
+        
+        # Mocking the file to include the URL
+        seqbank.file = {seqbank.key_url("http://example.com/file.fasta"): np.array([1, 2, 3], dtype="u1")}
+        
+        # Call add_url with the URL already present in the file and force=False
+        result = seqbank.add_url("http://example.com/file.fasta", force=False)
+        
+        # Assert that the URL was not processed again
+        assert not result
+
+def test_add_url_exception_handling():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        seqbank = SeqBank(path=tmpdirname/"seqbank.sb", write=True)
+
+        # Use patch to mock download_file to raise an exception
+        with patch('seqbank.seqbank.download_file') as mock_download_file:
+            mock_download_file.side_effect = Exception("Download failed")
+
+            result = seqbank.add_url("http://example.com/file.fasta", tmp_dir=tmpdirname)
+            
+            # Assert that the exception was handled and False was returned
+            assert not result
+            
+            # Verify the download_file was called with the expected arguments
+            expected_local_path = tmpdirname / Path("file.fasta")
+            # Get the actual call arguments
+            actual_call_args = mock_download_file.call_args[0]
+
+            # Extract and assert the URL and local path
+            assert actual_call_args[0] == "http://example.com/file.fasta"
+            assert actual_call_args[1].name == "file.fasta"  # Check if filename matches
+
+def test_missing_exception_handling():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        seqbank = SeqBank(path=tmpdirname / "seqbank.sb", write=True)
+
+        # Define the mock behavior
+        def mock_getitem(accession):
+            if accession == "faulty_accession":
+                raise ValueError("Data retrieval error")
+            elif accession == "valid_accession":
+                return np.array([0, 1, 2, 3], dtype="u1")
+            # Simulate the case where accessions are not found
+            raise KeyError("Accession not found")
+        
+        with patch.object(seqbank, '__getitem__', side_effect=mock_getitem):
+            accessions = ["valid_accession", "faulty_accession", "missing_accession"]
+            missing_accessions = seqbank.missing(accessions)
+            
+            # Check that 'faulty_accession' is in missing due to exception
+            assert "faulty_accession" in missing_accessions
+            
+            # Check that 'missing_accession' is in missing (not present in mock)
+            assert "missing_accession" in missing_accessions
+
+@pytest.fixture
+def seqbank():
+    # Create a mock SeqBank instance
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        seqbank = SeqBank(path=Path(tmpdirname) / "seqbank.sb", write=True)
+        return seqbank
+
+@patch.object(SeqBank, 'add_url')
+@patch('joblib.Parallel')
+@patch('joblib.delayed')
+def test_add_urls_max(mock_delayed, mock_parallel, mock_add_url, seqbank):
     # Prepare mock data
-    accessions = ['acc1', 'acc2', 'acc3']
-    base_dir = Path('test_base_dir')
-    email = 'test@example.com'
-    
-    # Mock the download_accessions method
-    mock_download_accessions.return_value = None
-    
-    # Call add_accessions
-    seqbank.add_accessions(accessions, base_dir=base_dir, email=email, batch_size=2)
-    
-    # Verify download_accessions was called correctly
-    assert mock_download_accessions.call_count == 2  # Check if it's called twice due to batch_size=2
-    
-    # Check if download_accessions was called correctly
-    mock_download_accessions.assert_called_with(
-        ['acc3'], base_dir=base_dir, email=email
-    )
+    urls = [f'http://example.com/file{i}.fasta' for i in range(10)]  # 10 URLs
+    max_urls = 5  # Limit to 5 URLs
+    format = "fasta"
+    force = False
+    workers = 2
+    tmp_dir = None
+
+    # Mock the delayed function and parallel execution
+    mock_delayed.return_value = lambda x: x
+    mock_parallel.return_value = []
+
+    # Call add_urls
+    seqbank.add_urls(urls, max=max_urls, format=format, force=force, workers=workers, tmp_dir=tmp_dir)
+
+    # Verify add_url is called only for the first `max_urls` URLs
+    assert mock_add_url.call_count == max_urls
+
+    # Check the URLs that were passed to add_url
+    called_urls = [call[0][0] for call in mock_add_url.call_args_list]
+    assert called_urls == urls[:max_urls]

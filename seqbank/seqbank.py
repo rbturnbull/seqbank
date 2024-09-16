@@ -8,7 +8,6 @@ from pathlib import Path
 from joblib import Parallel, delayed
 import plotly.express as px
 import plotly.graph_objs as go
-# import zarr
 from Bio.Seq import Seq
 from Bio.SeqRecord import SeqRecord
 from Bio import SeqIO
@@ -17,7 +16,6 @@ from rich.progress import track
 import pyfastx
 from rich.progress import Progress, TimeElapsedColumn, MofNCompleteColumn
 from datetime import datetime
-# from rocksdict import Rdict, Options
 from speedict import Rdict, Options, DBCompressionType, AccessType
 import atexit
 
@@ -54,7 +52,6 @@ class SeqBank():
     def file(self):
         options = Options(raw_mode=True)
         options.set_compression_type(DBCompressionType.none())
-        # options.set_cache_index_and_filter_blocks(True)
         options.set_optimize_filters_for_hits(True)
         options.optimize_for_point_lookup(1024)
         options.set_max_open_files(500)
@@ -67,14 +64,6 @@ class SeqBank():
 
         atexit.register(self.close)
         return self._db
-        
-        # For zarr
-        # store = zarr.DBMStore(self.path, open=dbm.gnu.open)
-        # store = zarr.ZipStore(self.path, mode='a')
-        # return zarr.open(store, mode='a')
-        
-        # For h5py
-        # return h5py.File(self.path, "a", libver='latest')
 
     def __len__(self):
         count = 0
@@ -88,7 +77,6 @@ class SeqBank():
             key = self.key(accession)
             file = self.file
             return file[key]
-            # return np.frombuffer(file[key], dtype="u1")
         except Exception as err:
             raise SeqBankError(f"Failed to read {accession} in SeqBank {self.path}:\n{err}")
 
@@ -106,17 +94,10 @@ class SeqBank():
         key = self.key(accession)
         f = self.file
         if key in f:
-            try:
-                del f[key]
-            except KeyError:
-                # f.create_dataset(key, "") # replace data in case there is a problem with it
-                # f[key] = "" 
-                del f[key]
+            del f[key]
 
     def add(self, seq:Union[str, Seq, SeqRecord, np.ndarray], accession:str) -> None:
         key = self.key(accession)
-        # if key in self.file:
-        #     return
         
         if isinstance(seq, SeqRecord):
             seq = seq.seq
@@ -125,7 +106,6 @@ class SeqBank():
         if isinstance(seq, str):
             seq = seq_to_bytes(seq)
         
-        # seq = compress(seq, self.compression)
         self.file[key] = seq
 
     def add_file(self, path:Path, format:str="", progress=None, overall_task=None, filter:Path|list|set|None=None) -> None:
@@ -188,112 +168,18 @@ class SeqBank():
     def get_accessions(self) -> set:
         accessions = set()
         file = self.file
-        main_keys = file.keys()
         for key in file.keys():
             accession = key.decode("ascii")
             if not accession.startswith("/seqbank/"):
                 accessions.update([accession])
         return accessions
 
-    def download_accessions(self, accessions, base_dir:Path, email:str=None):
-        base_dir.mkdir(exist_ok=True, parents=True)
-        local_path = base_dir / "downloaded.fa.gz"
-
-        from Bio import Entrez
-
-        if email:
-            Entrez.email = email
-        else:
-            raise Exception("no email provided")
-
-        print(f"Trying to download '{accessions}'")
-        accessions_str = ",".join(accessions)
-        try:
-            print("trying nucleotide database")
-            net_handle = Entrez.efetch(db="nucleotide", id=accessions_str, rettype="fasta", retmode="text")
-        except Exception as err:
-            print(f'failed {err}')
-            print("trying genome database")
-            time.sleep(3)
-            try:
-                net_handle = Entrez.efetch(db="genome", id=accessions_str, rettype="fasta", retmode="text")
-            except Exception as err:
-                print(f'failed {err}')
-                print("trying nuccore database")
-                try:
-                    net_handle = Entrez.efetch(db="nuccore", id=accessions_str, rettype="fasta", retmode="text")
-                except:
-                    print(f'failed {err}')
-                    return None
-
-        with gzip.open(local_path, "wt") as f:
-            f.write(net_handle.read())
-        net_handle.close()
-        self.add_file(local_path)
-
-    def missing(self, accessions, get:bool=False) -> set:
+    def missing(self, accessions) -> set:
         missing = set()
         for accession in track(accessions):
             if accession not in self:
                 missing.add(accession)
-            elif get:
-                try:
-                    data = self[accession]
-                except Exception:
-                    missing.add(accession)
         return missing
-
-    def add_accessions(self, accessions, base_dir:Path, email:str=None, batch_size=200, sleep:float=1.0):
-        to_download = []
-        for accession in track(accessions):
-            if accession in self:
-                continue
-
-            to_download.append(accession)
-            if len(to_download) >= batch_size:
-                self.download_accessions(to_download, base_dir=base_dir, email=email)
-                time.sleep(sleep)
-                to_download = []
-        
-        self.download_accessions(to_download, base_dir=base_dir, email=email)
-            # fasta_path = self.individual_accession_path(accession, base_dir=base_dir, email=email)
-            # if fasta_path:
-            #     self.add_file(fasta_path)
-
-    def individual_accession_path(self, accession: str, base_dir:Path, download: bool = True, email=None) -> Path:
-        local_path = base_dir / f"{accession}.fa.gz"
-        local_path.parent.mkdir(exist_ok=True, parents=True)
-        if download and not local_path.exists():
-            from Bio import Entrez
-
-            if email:
-                Entrez.email = email
-            else:
-                raise Exception("no email provided")
-
-            print(f"Trying to download '{accession}'")
-            try:
-                print("trying nucleotide database")
-                net_handle = Entrez.efetch(db="nucleotide", id=accession, rettype="fasta", retmode="text")
-            except Exception as err:
-                print(f'failed {err}')
-                print("trying genome database")
-                time.sleep(1)
-                try:
-                    net_handle = Entrez.efetch(db="genome", id=accession, rettype="fasta", retmode="text")
-                except Exception as err:
-                    print(f'failed {err}')
-                    print("trying nuccore database")
-                    try:
-                        net_handle = Entrez.efetch(db="nuccore", id=accession, rettype="fasta", retmode="text")
-                    except:
-                        print(f'failed {err}')
-                        return None
-
-            with gzip.open(local_path, "wt") as f:
-                f.write(net_handle.read())
-            net_handle.close()
-        return local_path
 
     def add_urls(self, urls:List[str], max:int=0, format:str="", force:bool=False, workers:int=-1, tmp_dir:str|Path|None=None):
         # only add the URLs that haven't been seen before
