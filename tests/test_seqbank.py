@@ -362,18 +362,6 @@ def test_missing(seqbank_with_data):
     
     assert missing_accessions == expected_missing
 
-def test_missing_with_get(seqbank_with_data):
-    seqbank = seqbank_with_data
-    
-    # List of accessions to check
-    accessions_to_check = ["seq1", "seq2", "seq3"]
-    
-    # Mocking the behavior of fetching missing accessions
-    with patch.object(seqbank, '__getitem__', side_effect=lambda x: seqbank.file[seqbank.key(x)] if x != "seq3" else None):
-        missing_accessions = seqbank.missing(accessions_to_check, get=True)
-    
-    # Since 'seq3' cannot be fetched, it should be reported as missing
-    assert missing_accessions == {"seq3"}
 
 @pytest.fixture
 def setup_seqbank(tmp_path):
@@ -493,7 +481,7 @@ def test_missing_exception_handling():
         
         with patch.object(seqbank, '__getitem__', side_effect=mock_getitem):
             accessions = ["valid_accession", "faulty_accession", "missing_accession"]
-            missing_accessions = seqbank.missing(accessions, get=True)
+            missing_accessions = seqbank.missing(accessions)
             
             # Check that 'faulty_accession' is in missing due to exception
             assert "faulty_accession" in missing_accessions

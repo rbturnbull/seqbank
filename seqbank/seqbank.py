@@ -174,16 +174,11 @@ class SeqBank():
                 accessions.update([accession])
         return accessions
 
-    def missing(self, accessions, get:bool=False) -> set:
+    def missing(self, accessions) -> set:
         missing = set()
         for accession in track(accessions):
             if accession not in self:
                 missing.add(accession)
-            elif get:
-                try:
-                    data = self[accession]
-                except Exception:
-                    missing.add(accession)
         return missing
 
     def add_urls(self, urls:List[str], max:int=0, format:str="", force:bool=False, workers:int=-1, tmp_dir:str|Path|None=None):
