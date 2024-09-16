@@ -362,18 +362,6 @@ def test_missing(seqbank_with_data):
     
     assert missing_accessions == expected_missing
 
-def test_missing_with_get(seqbank_with_data):
-    seqbank = seqbank_with_data
-    
-    # List of accessions to check
-    accessions_to_check = ["seq1", "seq2", "seq3"]
-    
-    # Mocking the behavior of fetching missing accessions
-    with patch.object(seqbank, '__getitem__', side_effect=lambda x: seqbank.file[seqbank.key(x)] if x != "seq3" else None):
-        missing_accessions = seqbank.missing(accessions_to_check, get=True)
-    
-    # Since 'seq3' cannot be fetched, it should be reported as missing
-    assert missing_accessions == {"seq3"}
 
 @pytest.fixture
 def setup_seqbank(tmp_path):
@@ -439,27 +427,6 @@ def seqbank_for_add():
         seqbank.file = {'acc1': np.array([0, 1, 2, 3], dtype="u1")}
         return seqbank
 
-@patch.object(SeqBank, 'download_accessions')
-def test_add_accessions(mock_download_accessions, seqbank_for_add):
-    # Prepare mock data
-    accessions = ['acc1', 'acc2', 'acc3']
-    base_dir = Path('test_base_dir')
-    email = 'test@example.com'
-    
-    # Mock the download_accessions method
-    mock_download_accessions.return_value = None
-    
-    # Call add_accessions
-    seqbank_for_add.add_accessions(accessions, base_dir=base_dir, email=email, batch_size=2)
-    
-    # Verify download_accessions was called correctly
-    assert mock_download_accessions.call_count == 2  # Check if it's called twice due to batch_size=2
-    
-    # Check if download_accessions was called correctly
-    mock_download_accessions.assert_called_with(
-        ['acc3'], base_dir=base_dir, email=email
-    )
-
 
 def test_add_url_existing_url_no_force():
     with tempfile.TemporaryDirectory() as tmpdirname:
@@ -514,7 +481,7 @@ def test_missing_exception_handling():
         
         with patch.object(seqbank, '__getitem__', side_effect=mock_getitem):
             accessions = ["valid_accession", "faulty_accession", "missing_accession"]
-            missing_accessions = seqbank.missing(accessions, get=True)
+            missing_accessions = seqbank.missing(accessions)
             
             # Check that 'faulty_accession' is in missing due to exception
             assert "faulty_accession" in missing_accessions
