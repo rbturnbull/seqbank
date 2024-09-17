@@ -6,7 +6,7 @@ from seqbank.refseq import get_refseq_filenames, get_refseq_urls
 
 @pytest.fixture
 def mock_download_file():
-    with patch('seqbank.io.download_file') as mock_download:
+    with patch('seqbank.refseq.download_file') as mock_download:
         yield mock_download
 
 @patch('pathlib.Path.read_text')
@@ -28,6 +28,9 @@ def test_get_refseq_filenames(mock_read_text, mock_download_file):
     # Test the get_refseq_filenames function
     filenames = get_refseq_filenames(tmp_dir=None)
     assert filenames == ['refseq.2.genomic.fna.gz', 'refseq.10.genomic.fna.gz', 'refseq.100.genomic.fna.gz']
+
+    # Assert that the mock was called (i.e., the real download_file was not used)
+    assert mock_download_file.called
 
 def test_get_refseq_urls(mock_download_file):
     # Mocking the output of get_refseq_filenames
