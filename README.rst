@@ -41,11 +41,7 @@ Easily import sequences into a SeqBank database from local files or external URL
 When dealing with large datasets or numerous sequence URLs, SeqBank can utilize multi-threaded downloading, allowing you to download and process multiple sequences in parallel, significantly speeding up the workflow.
 
 **Database Management:**  
-SeqBank provides a range of commands to manage sequence databases:
-
-- **Listing Sequences:** List all accessions in the SeqBank database.
-- **Deleting Sequences:** Remove specific sequences from the database.
-- **Counting Sequences:** Quickly determine the number of sequences stored in your SeqBank.
+SeqBank provides a range of simple commands to manage sequence databases such as listing, deleting, and exporting sequences.
 
 **Integration with RefSeq and DFam:**  
 SeqBank makes it simple to download and add sequences from popular genomic databases like RefSeq and DFam. This can be done directly from the command line, allowing for seamless integration into your bioinformatics pipelines.
@@ -77,18 +73,143 @@ To install the latest version from the repository, you can use this command:
 
 
 Usage
-============
+===========
+    
+SeqBank provides a command-line interface (CLI) for managing DNA sequence data efficiently. Below are key tools, their usage, and practical examples based on the available commands in the `SeqBank` application.
 
-TODO Explain main CLI tools
+- **Adding Sequences:**
+  SeqBank allows you to import sequence data from files or URLs into the database. SeqBank supports multiple sequence formats, providing flexibility in handling various datasets.
 
-e.g. 
-seqbank add
+  **Example:**
+  
+  To add sequences from one or more local files:
+  
+  .. code-block:: bash
 
-seqbank count
+      seqbank add /path/to/seqbank /path/to/sequence1.fasta /path/to/sequence2.fasta --format fasta
 
-seqbank ls
+  To add sequences from a list of URLs:
+  
+  .. code-block:: bash
 
-seqbank delete
+      seqbank url /path/to/seqbank https://example.com/sequence1.fasta https://example.com/sequence2.fasta --format fasta --workers 4
+
+  **Use case:**  
+  Suppose you have a new set of genome sequences in FASTA format stored locally or accessible via URLs. You can quickly import these sequences into your SeqBank database for centralized storage and further analysis.
+
+- **Managing Databases:**
+  SeqBank provides commands to manage and query the sequences in your database. You can list, count, and delete sequences, allowing efficient database management.
+
+  **Example:**
+  
+  To list all sequences in the database:
+  
+  .. code-block:: bash
+
+      seqbank ls /path/to/seqbank
+
+  To count the number of sequences stored:
+  
+  .. code-block:: bash
+
+      seqbank count /path/to/seqbank
+
+  To delete a specific sequence by accession number:
+  
+  .. code-block:: bash
+
+      seqbank delete /path/to/seqbank ABC123DEF456
+
+  **Use case:**  
+  If you're managing a growing sequence database, the `ls` command can help you track the sequences, while `delete` can be used to remove outdated or incorrect entries.
+
+- **Exporting Sequences:**
+  Export your stored sequences to common formats like FASTA for easy sharing and use with other bioinformatics tools. The export functionality ensures that your data remains compatible with external platforms.
+
+  **Example:**
+  
+  To export sequences in FASTA format to a specific output directory:
+  
+  .. code-block:: bash
+
+      seqbank export /path/to/seqbank /output/directory --format fasta
+
+  **Use case:**  
+  After storing a collection of curated sequences, you may need to export them in FASTA format for downstream analysis using tools like BLAST or multiple sequence alignment software.
+
+- **Integration with RefSeq and DFam:**
+  SeqBank can directly download sequences from RefSeq and DFam databases, making it easy to incorporate data from these resources into your workflow.
+
+  **Example:**
+  
+  To download and add RefSeq sequences with a maximum of 1000 sequences using 4 workers:
+  
+  .. code-block:: bash
+
+      seqbank refseq /path/to/seqbank --max 1000 --workers 4
+
+  To download and add DFam sequences from the current release with curated data:
+  
+  .. code-block:: bash
+
+      seqbank dfam /path/to/seqbank --release current --curated
+
+  **Use case:**  
+  If you are studying repetitive elements in a genome, you can easily integrate sequences from DFam into your SeqBank database for comprehensive analysis.
+
+- **Visualization:**
+  SeqBank allows you to generate histograms of sequence lengths, providing an overview of the data distribution. The histogram can be saved as an image or displayed interactively.
+
+  **Example:**
+  
+  To generate and save a histogram of sequence lengths:
+  
+  .. code-block:: bash
+
+      seqbank histogram /path/to/seqbank --output histogram.png --nbins 50
+
+  To generate and display the histogram interactively:
+  
+  .. code-block:: bash
+
+      seqbank histogram /path/to/seqbank --show --nbins 50
+
+  **Use case:**  
+  When working with a dataset of varying sequence lengths, generating a histogram can help visualize the distribution and detect outliers or inconsistencies in the data.
+
+- **Copying Databases:**
+  SeqBank allows you to copy sequences from one SeqBank database to another, facilitating data migration or backup processes.
+
+  **Example:**
+  
+  To copy sequences from a source SeqBank to a destination SeqBank:
+  
+  .. code-block:: bash
+
+      seqbank cp /path/to/source_seqbank /path/to/destination_seqbank
+
+  **Use case:**  
+  For maintaining backups of your sequence database or migrating data to a new location, the `cp` command provides a straightforward method to duplicate your SeqBank data.
+
+- **Filtering and Custom Workflows:**
+  SeqBank supports filtering sequences based on criteria such as sequence length or file format before adding them to the database. Additionally, multi-threaded downloading allows you to download and process sequences more efficiently.
+
+  **Example:**
+  
+  To filter sequences longer than 1000 bp before adding them:
+  
+  .. code-block:: bash
+
+      seqbank add /path/to/seqbank /path/to/sequences.fasta --format fasta --filter /path/to/filter_file
+
+  To enable multi-threaded downloading when adding sequences from URLs:
+  
+  .. code-block:: bash
+
+      seqbank url /path/to/seqbank https://example.com/sequence1.fasta https://example.com/sequence2.fasta --format fasta --workers 4 --tmp-dir /path/to/tmp
+
+  **Use case:**  
+  In projects where only sequences longer than a specific threshold are required, the filtering feature ensures that only relevant sequences are stored. Multi-threaded downloading can be utilized when processing large datasets to save time.
 
 
 .. end-quickstart
