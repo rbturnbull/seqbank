@@ -67,6 +67,7 @@ Credits
 .. start-credits
 
 * Robert Turnbull <robert.turnbull@unimelb.edu.au>
+* Rafsan Al Mamun <rafsan7238@gmail.com>
 
 .. end-credits
 
