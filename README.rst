@@ -77,7 +77,7 @@ Usage
     
 SeqBank provides a command-line interface (CLI) for managing DNA sequence data efficiently. Below are key tools, their usage, and practical examples based on the available commands in the `SeqBank` application.
 
-1. **Adding Sequences:**
+- **Adding Sequences:**
   SeqBank allows you to import sequence data from files or URLs into the database. SeqBank supports multiple sequence formats, providing flexibility in handling various datasets.
 
   **Example:**
@@ -97,7 +97,7 @@ SeqBank provides a command-line interface (CLI) for managing DNA sequence data e
   **Use case:**  
   Suppose you have a new set of genome sequences in FASTA format stored locally or accessible via URLs. You can quickly import these sequences into your SeqBank database for centralized storage and further analysis.
 
-2. **Managing Databases:**
+- **Managing Databases:**
   SeqBank provides commands to manage and query the sequences in your database. You can list, count, and delete sequences, allowing efficient database management.
 
   **Example:**
@@ -123,7 +123,7 @@ SeqBank provides a command-line interface (CLI) for managing DNA sequence data e
   **Use case:**  
   If you're managing a growing sequence database, the `ls` command can help you track the sequences, while `delete` can be used to remove outdated or incorrect entries.
 
-3. **Exporting Sequences:**
+- **Exporting Sequences:**
   Export your stored sequences to common formats like FASTA for easy sharing and use with other bioinformatics tools. The export functionality ensures that your data remains compatible with external platforms.
 
   **Example:**
@@ -137,7 +137,7 @@ SeqBank provides a command-line interface (CLI) for managing DNA sequence data e
   **Use case:**  
   After storing a collection of curated sequences, you may need to export them in FASTA format for downstream analysis using tools like BLAST or multiple sequence alignment software.
 
-4. **Integration with RefSeq and DFam:**
+- **Integration with RefSeq and DFam:**
   SeqBank can directly download sequences from RefSeq and DFam databases, making it easy to incorporate data from these resources into your workflow.
 
   **Example:**
@@ -157,7 +157,7 @@ SeqBank provides a command-line interface (CLI) for managing DNA sequence data e
   **Use case:**  
   If you are studying repetitive elements in a genome, you can easily integrate sequences from DFam into your SeqBank database for comprehensive analysis.
 
-5. **Visualization:**
+- **Visualization:**
   SeqBank allows you to generate histograms of sequence lengths, providing an overview of the data distribution. The histogram can be saved as an image or displayed interactively.
 
   **Example:**
@@ -177,7 +177,7 @@ SeqBank provides a command-line interface (CLI) for managing DNA sequence data e
   **Use case:**  
   When working with a dataset of varying sequence lengths, generating a histogram can help visualize the distribution and detect outliers or inconsistencies in the data.
 
-6. **Copying Databases:**
+- **Copying Databases:**
   SeqBank allows you to copy sequences from one SeqBank database to another, facilitating data migration or backup processes.
 
   **Example:**
@@ -191,7 +191,7 @@ SeqBank provides a command-line interface (CLI) for managing DNA sequence data e
   **Use case:**  
   For maintaining backups of your sequence database or migrating data to a new location, the `cp` command provides a straightforward method to duplicate your SeqBank data.
 
-7. **Filtering and Custom Workflows:**
+- **Filtering and Custom Workflows:**
   SeqBank supports filtering sequences based on criteria such as sequence length or file format before adding them to the database. Additionally, multi-threaded downloading allows you to download and process sequences more efficiently.
 
   **Example:**
