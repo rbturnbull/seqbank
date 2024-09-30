@@ -1,17 +1,19 @@
-
-from typing import List, Set
+from typing import List, Set, Union, Optional
 from pathlib import Path
 
-def parse_filter(filter:Path|list|set|None=None) -> Set[str]:
-    """ Returns a set of strings to use as a filter.
-     
-    Args:   
-        filter: A list, set or Path to a file containing a list of strings to use as a filter.
-                If it is a Path, it should point to a file containing a list of strings, one per line.
-                It can also be None, in which case it returns None.
-        
+def parse_filter(filter: Union[Path, List[str], Set[str], None] = None) -> Optional[Set[str]]:
+    """Converts the input into a set of strings to use as a filter.
+
+    Args:
+        filter (Union[Path, List[str], Set[str], None], optional): 
+            The filter can be:
+            - A `Path` to a file where each line contains a string.
+            - A `list` or `set` of strings.
+            - `None`, in which case the function will return `None`.
+
     Returns:
-        A set of strings to use as a filter.
+        Optional[Set[str]]: 
+            A set of strings to use as a filter, or `None` if the input is `None`.
     """
     if not filter:
         return None
@@ -20,5 +22,3 @@ def parse_filter(filter:Path|list|set|None=None) -> Set[str]:
         return set(filter.read_text().strip().split("\n"))
     
     return set(filter)
-    
-
