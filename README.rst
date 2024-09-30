@@ -25,9 +25,41 @@ Seqbank
 
 .. start-quickstart
 
-A database to quickly read and write DNA sequence data in numerical form.
+SeqBank is a powerful and flexible command-line application designed to simplify the management and processing of large DNA sequence datasets. Whether you're working with local sequence files, 
+retrieving data from remote URLs, or integrating sequences from databases like RefSeq and DFam, SeqBank provides an efficient, user-friendly solution.
 
-TODO - add description of seqbank app
+SeqBank allows users to quickly add, organize, and manipulate sequences using a structured, numerical format optimized for fast retrieval and analysis. 
+It's especially useful for bioinformatics professionals who regularly handle vast amounts of genomic data.
+
+**Key Features**
+
+- **Add Sequences from Files or URLs:**  
+  Easily import sequences into a SeqBank database from local files or external URLs. SeqBank supports multiple formats, enabling you to work with a wide variety of sequence data.
+
+- **Multi-threaded Downloading:**  
+  When dealing with large datasets or numerous sequence URLs, SeqBank can utilize multi-threaded downloading, allowing you to download and process multiple sequences in parallel, significantly speeding up the workflow.
+
+- **Database Management:**  
+  SeqBank provides a range of commands to manage sequence databases:
+  
+  - **Listing Sequences:** List all accessions in the SeqBank database.
+  - **Deleting Sequences:** Remove specific sequences from the database.
+  - **Counting Sequences:** Quickly determine the number of sequences stored in your SeqBank.
+
+- **Integration with RefSeq and DFam:**  
+  SeqBank makes it simple to download and add sequences from popular genomic databases like RefSeq and DFam. This can be done directly from the command line, allowing for seamless integration into your bioinformatics pipelines.
+
+- **Data Export:**  
+  Sequences stored in SeqBank can be exported to widely-used formats like FASTA, making them easily shareable and compatible with other bioinformatics tools and platforms.
+
+- **Histogram Visualization:**  
+  SeqBank includes built-in functionality for generating histograms of sequence lengths, providing a visual summary of the data. You can save the histogram as an image file or display it interactively for immediate analysis.
+
+- **Efficient Data Filtering:**  
+  SeqBank allows users to filter sequences based on specific criteria before adding them to the database, ensuring only relevant data is stored.
+
+- **Customizable Workflow:**  
+  With support for specifying sequence formats, controlling maximum sequence additions, and utilizing temporary directories for downloads, SeqBank provides flexibility to suit various project requirements.
 
 Installation
 ============
