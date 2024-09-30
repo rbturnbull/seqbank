@@ -55,7 +55,7 @@ seqbank count
 
 seqbank ls
 
-delete
+seqbank delete
 
 
 .. end-quickstart
