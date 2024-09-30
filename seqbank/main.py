@@ -1,6 +1,5 @@
 import typer
 from pathlib import Path
-from typing import List
 from rich.progress import track
 
 from .refseq import get_refseq_urls
@@ -12,12 +11,12 @@ import plotly.graph_objs as go
 app = typer.Typer()
 
 @app.command()
-def add(path: Path, files: List[Path], format: str = "", filter: Path = None) -> None:
+def add(path: Path, files: list[Path], format: str = "", filter: Path = None) -> None:
     """Add sequences from a file or list of files to a SeqBank.
 
     Args:
         path (Path): The path to the SeqBank.
-        files (List[Path]): A list of file paths containing sequences.
+        files (list[Path]): A list of file paths containing sequences.
         format (str, optional): The format of the sequence files. Defaults to "".
         filter (Path, optional): A filter file for sequences. Defaults to None.
     """
@@ -27,12 +26,12 @@ def add(path: Path, files: List[Path], format: str = "", filter: Path = None) ->
 
 
 @app.command()
-def url(path: Path, urls: List[str], format: str = "", max: int = 0, workers: int = -1, tmp_dir: Path = None) -> None:
+def url(path: Path, urls: list[str], format: str = "", max: int = 0, workers: int = -1, tmp_dir: Path = None) -> None:
     """Add sequences from a list of URLs to a SeqBank.
 
     Args:
         path (Path): The path to the SeqBank.
-        urls (List[str]): A list of URLs containing sequences.
+        urls (list[str]): A list of URLs containing sequences.
         format (str, optional): The format of the sequence files. Defaults to "".
         max (int, optional): Maximum number of sequences to add. Defaults to 0 (all).
         workers (int, optional): Number of workers to use for downloading. Defaults to -1.
@@ -45,12 +44,12 @@ def url(path: Path, urls: List[str], format: str = "", max: int = 0, workers: in
 
 
 @app.command()
-def delete(path: Path, accessions: List[str]) -> None:
+def delete(path: Path, accessions: list[str]) -> None:
     """Delete sequences from a SeqBank.
 
     Args:
         path (Path): The path to the SeqBank.
-        accessions (List[str]): A list of accessions to delete from the SeqBank.
+        accessions (list[str]): A list of accessions to delete from the SeqBank.
     """
     print(f"Opening seqbank '{path}'")
     seqbank = SeqBank(path=path, write=True)
