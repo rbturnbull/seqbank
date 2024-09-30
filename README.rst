@@ -27,6 +27,8 @@ Seqbank
 
 A database to quickly read and write DNA sequence data in numerical form.
 
+TODO - add description of seqbank app
+
 Installation
 ============
 
@@ -39,6 +41,21 @@ To install the latest version from the repository, you can use this command:
 .. note ::
 
     Soon seqbank will be able to be installed using conda and PyPI
+
+
+Usage
+============
+
+TODO Explain main CLI tools
+
+e.g. 
+seqbank add
+
+seqbank count
+
+seqbank ls
+
+delete
 
 
 .. end-quickstart
