@@ -1,5 +1,3 @@
-
-from typing import Union, List, Set
 from functools import cached_property
 import numpy as np
 import gzip
@@ -173,14 +171,14 @@ class SeqBank():
         if key in f:
             del f[key]
 
-    def add(self, seq: Union[str, Seq, SeqRecord, np.ndarray], accession: str) -> None:
+    def add(self, seq: str | Seq | SeqRecord | np.ndarray, accession: str) -> None:
         """Adds a sequence to the SeqBank with a given accession.
 
         This method accepts a sequence in various formats (string, Seq, SeqRecord, or NumPy array)
         and stores it in the SeqBank after appropriate conversion to byte format.
 
         Args:
-            seq (Union[str, Seq, SeqRecord, np.ndarray]): The sequence to add to the SeqBank. 
+            seq (str | Seq | SeqRecord | np.ndarray): The sequence to add to the SeqBank. 
                 It can be a string, Bio.Seq object, SeqRecord, or a NumPy array.
             accession (str): The accession key for the sequence to be stored under.
 
@@ -208,8 +206,8 @@ class SeqBank():
             path (Path): The path to the sequence file.
             format (str, optional): The format of the sequence file (e.g., "fasta", "fastq"). If not provided, it will be auto-detected.
             progress (Progress, optional): A rich progress bar to display the import progress. Defaults to None.
-            overall_task (Union[int, None], optional): An optional task ID for tracking the overall progress. Defaults to None.
-            filter (Union[Path, list, set, None], optional): A filter for selecting specific accessions. Defaults to None.
+            overall_task (int | None, optional): An optional task ID for tracking the overall progress. Defaults to None.
+            filter (Path | list | set | None, optional): A filter for selecting specific accessions. Defaults to None.
 
         Returns:
             None
@@ -280,8 +278,8 @@ class SeqBank():
             progress (Progress, optional): A rich progress bar to display progress of the download and file processing. Defaults to None.
             format (str, optional): The format of the sequence file (e.g., "fasta", "fastq"). If not provided, it will be auto-detected. Defaults to "".
             force (bool, optional): Whether to force downloading and processing the URL even if it has been seen before. Defaults to False.
-            overall_task (Union[int, None], optional): An optional task ID for tracking overall progress. Defaults to None.
-            tmp_dir (Union[str, Path, None], optional): A temporary directory to store the downloaded file. Defaults to None.
+            overall_task (int | None, optional): An optional task ID for tracking overall progress. Defaults to None.
+            tmp_dir (str | Path | None, optional): A temporary directory to store the downloaded file. Defaults to None.
 
         Returns:
             bool: True if the URL was successfully processed and added, False otherwise.
@@ -302,14 +300,14 @@ class SeqBank():
 
             return True
 
-    def get_accessions(self) -> Set[str]:
+    def get_accessions(self) -> set[str]:
         """Retrieves all accessions stored in the SeqBank.
 
         This method iterates through the SeqBank database keys and collects all accessions that do not belong 
         to the internal '/seqbank/' namespace.
 
         Returns:
-            Set[str]: A set of all accessions present in the SeqBank.
+            set[str]: A set of all accessions present in the SeqBank.
         """
         accessions = set()
         file = self.file
@@ -321,16 +319,16 @@ class SeqBank():
 
         return accessions
 
-    def missing(self, accessions: Union[List[str], Set[str]]) -> Set[str]:
+    def missing(self, accessions: list[str] | set[str]) -> set[str]:
         """Finds accessions that are not present in the SeqBank.
 
         This method checks a list or set of accessions and returns those that are missing from the SeqBank.
 
         Args:
-            accessions (Union[List[str], Set[str]]): A list or set of accessions to check for presence in the SeqBank.
+            accessions (list[str] | set[str]): A list or set of accessions to check for presence in the SeqBank.
 
         Returns:
-            Set[str]: A set of accessions that are missing from the SeqBank.
+            set[str]: A set of accessions that are missing from the SeqBank.
         """
         missing = set()
 
@@ -340,7 +338,7 @@ class SeqBank():
 
         return missing
 
-    def add_urls(self, urls:List[str], max:int=0, format:str="", force:bool=False, workers:int=-1, tmp_dir:str|Path|None=None) -> None:
+    def add_urls(self, urls:list[str], max:int=0, format:str="", force:bool=False, workers:int=-1, tmp_dir:str|Path|None=None) -> None:
         """Downloads and adds sequences from a list of URLs to the SeqBank.
 
         This method processes a list of URLs, downloads the corresponding sequence files, and adds them to the SeqBank.
@@ -348,12 +346,12 @@ class SeqBank():
         of URLs processed based on the `max` argument. The processing can be parallelized using the `workers` argument.
 
         Args:
-            urls (List[str]): A list of URLs to download and process.
+            urls (list[str]): A list of URLs to download and process.
             max (int, optional): Maximum number of URLs to process. If set to 0, all URLs will be processed. Defaults to 0.
             format (str, optional): The format of the sequence files (e.g., "fasta", "fastq"). If not provided, it will be auto-detected. Defaults to "".
             force (bool, optional): Whether to force re-processing of URLs even if they were processed before. Defaults to False.
             workers (int, optional): Number of workers to use for parallel processing. If set to -1, all available CPU cores will be used. Defaults to -1.
-            tmp_dir (Union[str, Path, None], optional): A temporary directory to store downloaded files. Defaults to None.
+            tmp_dir (str | Path | None, optional): A temporary directory to store downloaded files. Defaults to None.
 
         Returns:
             None
@@ -386,7 +384,7 @@ class SeqBank():
         for k in self.file.keys():
             print(k.decode("ascii"))
 
-    def add_files(self, files:List[str], max:int=0, format:str="", workers:int=1, filter:Path|list|set|None=None) -> None:
+    def add_files(self, files:list[str], max:int=0, format:str="", workers:int=1, filter:Path|list[str]|set[str]|None=None) -> None:
         """
         Adds sequences from multiple files to the SeqBank.
 
@@ -394,11 +392,11 @@ class SeqBank():
         It supports parallel processing and optional filtering of specific accessions. The `max` argument limits the number of files to process.
 
         Args:
-            files (List[str]): A list of file paths to process.
+            files (list[str]): A list of file paths to process.
             max (int, optional): Maximum number of files to process. If set to 0, all files will be processed. Defaults to 0.
             format (str, optional): The format of the sequence files (e.g., "fasta", "fastq"). If not provided, it will be auto-detected. Defaults to "".
             workers (int, optional): Number of workers to use for parallel processing. Defaults to 1.
-            filter (Union[Path, List[str], Set[str], None], optional): A filter for selecting specific accessions. Defaults to None.
+            filter (Path | list[str] | set[str] | None, None], optional): A filter for selecting specific accessions. Defaults to None.
 
         Returns:
             None
@@ -469,14 +467,14 @@ class SeqBank():
         )
         return record
 
-    def export(self, output: Path | str, format: str = "", accessions: List[str] | str | Path | None = None) -> None:
+    def export(self, output: Path | str, format: str = "", accessions: list[str] | str | Path | None = None) -> None:
         """
         Exports the data from the SeqBank to a file using BioPython's SeqIO.
 
         Args:
             output (Path | str): The path or filename where the data should be exported.
             format (str, optional): The file format for exporting. If not specified, it will be inferred from the file extension.
-            accessions (List[str] | str | Path | None, optional): A list of accessions to export. If a file path or string is provided, it will be read to obtain the list of accessions. If None, all accessions in the SeqBank are exported.
+            accessions (list[str] | str | Path | None, optional): A list of accessions to export. If a file path or string is provided, it will be read to obtain the list of accessions. If None, all accessions in the SeqBank are exported.
 
         Returns:
             None

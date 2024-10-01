@@ -1,19 +1,17 @@
 from pathlib import Path
 import re
-from typing import List, Union
-
 from .io import download_file, TemporaryDirectory
 
-def get_refseq_filenames(tmp_dir: Union[str, Path, None] = None) -> List[str]:
+def get_refseq_filenames(tmp_dir: str | Path | None = None) -> list[str]:
     """
     Retrieves a list of RefSeq genomic filenames from the NCBI FTP site.
 
     Args:
-        tmp_dir (Union[str, Path, None], optional): 
+        tmp_dir (str | Path | None, optional): 
             The directory to create a temporary folder in. If None, a default temporary directory is used.
     
     Returns:
-        List[str]: A list of filenames sorted numerically by version.
+        list[str]: A list of filenames sorted numerically by version.
     """
     with TemporaryDirectory(prefix=tmp_dir) as dirname:
         local_path = dirname / 'refseq_complete.html'
@@ -30,16 +28,16 @@ def get_refseq_filenames(tmp_dir: Union[str, Path, None] = None) -> List[str]:
         return filenames
     
     
-def get_refseq_urls(tmp_dir: Union[str, Path, None] = None) -> List[str]:
+def get_refseq_urls(tmp_dir: str | Path | None = None) -> list[str]:
     """
     Retrieves a list of URLs for RefSeq genomic files from the NCBI FTP site.
 
     Args:
-        tmp_dir (Union[str, Path, None], optional): 
+        tmp_dir (str | Path | None, optional): 
             The directory to create a temporary folder in. If None, a default temporary directory is used.
 
     Returns:
-        List[str]: A list of URLs for the RefSeq genomic files.
+        list[str]: A list of URLs for the RefSeq genomic files.
     """
     filenames = get_refseq_filenames(tmp_dir=tmp_dir)
     return [f"https://ftp.ncbi.nlm.nih.gov/refseq/release/complete/{filename}" for filename in filenames]
