@@ -121,7 +121,7 @@ After storing a collection of curated sequences, you may need to export them in 
 
 
 Integration with RefSeq and DFam
--------------------------------
+--------------------------------
 
 SeqBank integrates with popular genomic databases like RefSeq and DFam, allowing users to download and incorporate sequences from these sources.
 

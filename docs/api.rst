@@ -2,7 +2,7 @@
 API Reference
 =======================
 
-.. automodule:: seqbank.seqbank
+.. autoclass:: seqbank.seqbank::SeqBank
     :members:
     :inherited-members:
 
