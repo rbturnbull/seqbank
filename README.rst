@@ -54,7 +54,6 @@ Or install directly from the GitHub repository:
 
     Soon seqbank will be able to be installed using conda.
 
-
 Usage
 ===========
     
