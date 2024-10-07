@@ -38,7 +38,7 @@ It's especially useful for bioinformatics professionals who regularly handle vas
 Installation
 ============
 
-To install the latest version from the repository, you can use this command:
+To install seqbank from PyPI, you can use this command:
 
 .. code-block:: bash
 
