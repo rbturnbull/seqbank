@@ -7,6 +7,7 @@ import shutil
 from .io import download_file
 from .seqbank import SeqBank
 
+
 def dfam_url(curated: bool = True, release: str = "current") -> str:
     """
     Constructs the URL for the Dfam database file.
@@ -31,15 +32,15 @@ def add_dfam(seqbank: SeqBank, local_path: Path) -> None:
         seqbank (SeqBank): The SeqBank instance to add sequences to.
         local_path (Path): The path to the local Dfam HDF5 file.
     """
-    file = h5py.File(local_path, 'r')
-    
+    file = h5py.File(local_path, "r")
+
     def visitor_func(name, node):
         if isinstance(node, h5py.Dataset):
-            accession = node.attrs['accession']
-            seq = node.attrs['consensus']
+            accession = node.attrs["accession"]
+            seq = node.attrs["consensus"]
             seqbank.add(seq=seq, accession=accession)
 
-    file['Families/DF'].visititems(visitor_func)
+    file["Families/DF"].visititems(visitor_func)
 
 
 def download_dfam(seqbank: SeqBank, curated: bool = True, release: str = "current", force: bool = False) -> bool:
@@ -57,11 +58,11 @@ def download_dfam(seqbank: SeqBank, curated: bool = True, release: str = "curren
     """
     url = dfam_url(curated, release)
     url_key = seqbank.key_url(url)
-    
+
     if url_key in seqbank.file and not force:
         print(f"Already downloaded: {url}")
         return False
-    
+
     with tempfile.TemporaryDirectory() as tmpdirname:
         local_gzip_path = Path(tmpdirname) / Path(url).name
         try:
@@ -70,7 +71,7 @@ def download_dfam(seqbank: SeqBank, curated: bool = True, release: str = "curren
 
             # Decompress the gzipped file
             local_path = local_gzip_path.with_suffix("")
-            with gzip.open(local_gzip_path, 'rb') as infile, open(local_path, 'wb') as outfile:
+            with gzip.open(local_gzip_path, "rb") as infile, open(local_path, "wb") as outfile:
                 shutil.copyfileobj(infile, outfile)
 
             # Add sequences to SeqBank

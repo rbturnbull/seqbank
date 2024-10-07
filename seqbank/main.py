@@ -10,6 +10,7 @@ import plotly.graph_objs as go
 
 app = typer.Typer()
 
+
 @app.command()
 def add(path: Path, files: list[Path], format: str = "", filter: Path = None) -> None:
     """Add sequences from a file or list of files to a SeqBank.
@@ -53,7 +54,7 @@ def delete(path: Path, accessions: list[str]) -> None:
     """
     print(f"Opening seqbank '{path}'")
     seqbank = SeqBank(path=path, write=True)
-    
+
     for accession in track(accessions, "Deleting"):
         seqbank.delete(accession)
 

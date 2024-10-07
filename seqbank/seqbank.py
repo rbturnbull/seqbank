@@ -23,11 +23,10 @@ from .exceptions import SeqBankError
 from .utils import parse_filter
 
 
-
 @define(slots=False)
-class SeqBank():
-    path:Path
-    write:bool = False
+class SeqBank:
+    path: Path
+    write: bool = False
 
     def __attrs_post_init__(self) -> None:
         """Initializes the SeqBank object after attributes are set.
@@ -52,7 +51,6 @@ class SeqBank():
         """
         return bytes(accession, "ascii")
 
-
     def key_url(self, url: str) -> str:
         """Generates a key for a given URL.
 
@@ -63,7 +61,6 @@ class SeqBank():
             str: A byte-encoded key string prefixed with '/seqbank/url/'.
         """
         return self.key("/seqbank/url/" + url)
-
 
     def close(self) -> None:
         """Closes the SeqBank database connection.
@@ -92,9 +89,9 @@ class SeqBank():
         options.set_max_open_files(500)
 
         self._db = Rdict(
-            path=str(self.path), 
-            options=options, 
-            access_type=AccessType.read_write() if self.write else AccessType.read_only()
+            path=str(self.path),
+            options=options,
+            access_type=AccessType.read_write() if self.write else AccessType.read_only(),
         )
 
         atexit.register(self.close)
@@ -178,7 +175,7 @@ class SeqBank():
         and stores it in the SeqBank after appropriate conversion to byte format.
 
         Args:
-            seq (str | Seq | SeqRecord | np.ndarray): The sequence to add to the SeqBank. 
+            seq (str | Seq | SeqRecord | np.ndarray): The sequence to add to the SeqBank.
                 It can be a string, Bio.Seq object, SeqRecord, or a NumPy array.
             accession (str): The accession key for the sequence to be stored under.
 
@@ -186,20 +183,22 @@ class SeqBank():
             None
         """
         key = self.key(accession)
-        
+
         if isinstance(seq, SeqRecord):
             seq = seq.seq
         if isinstance(seq, Seq):
             seq = str(seq)
         if isinstance(seq, str):
             seq = seq_to_bytes(seq)
-        
+
         self.file[key] = seq
 
-    def add_file(self, path:Path, format:str="", progress=None, overall_task=None, filter:Path|list|set|None=None) -> None:
+    def add_file(
+        self, path: Path, format: str = "", progress=None, overall_task=None, filter: Path | list | set | None = None
+    ) -> None:
         """Adds sequences from a file to the SeqBank.
 
-        This method processes a sequence file in various formats (e.g., FASTA, FASTQ), optionally filtering specific accessions, 
+        This method processes a sequence file in various formats (e.g., FASTA, FASTQ), optionally filtering specific accessions,
         and adds the sequences to the SeqBank. Progress tracking is available for large file imports.
 
         Args:
@@ -228,7 +227,7 @@ class SeqBank():
                 progress.update(task, advance=1)
         else:
             total = seq_count(path)
-            
+
             with open_path(path) as f:
                 task = progress.add_task(f"[magenta]{path.name}", total=total)
                 for record in SeqIO.parse(f, format):
@@ -242,7 +241,7 @@ class SeqBank():
         if overall_task is not None:
             progress.update(overall_task, advance=1)
 
-        print('Added', path.name)
+        print("Added", path.name)
 
     def seen_url(self, url: str) -> bool:
         """Checks if a given URL has been seen (i.e., processed) before and present in the SeqBank.
@@ -267,7 +266,15 @@ class SeqBank():
         url_key = self.key_url(url)
         self.file[url_key] = bytes(datetime.now().strftime("%Y-%m-%d %H:%M:%S"), "ascii")
 
-    def add_url(self, url:str, progress=None, format:str="", force:bool=False, overall_task=None, tmp_dir:str|Path|None=None) -> bool:
+    def add_url(
+        self,
+        url: str,
+        progress=None,
+        format: str = "",
+        force: bool = False,
+        overall_task=None,
+        tmp_dir: str | Path | None = None,
+    ) -> bool:
         """Downloads and adds sequences from a URL to the SeqBank.
 
         This method downloads a file from a given URL, processes it to extract sequences, and adds them to the SeqBank.
@@ -287,7 +294,7 @@ class SeqBank():
         url_key = self.key_url(url)
         if url_key in self.file and not force:
             return False
-        
+
         with TemporaryDirectory(prefix=tmp_dir) as tmpdirname:
             local_path = tmpdirname / Path(url).name
             try:
@@ -303,7 +310,7 @@ class SeqBank():
     def get_accessions(self) -> set[str]:
         """Retrieves all accessions stored in the SeqBank.
 
-        This method iterates through the SeqBank database keys and collects all accessions that do not belong 
+        This method iterates through the SeqBank database keys and collects all accessions that do not belong
         to the internal '/seqbank/' namespace.
 
         Returns:
@@ -338,11 +345,19 @@ class SeqBank():
 
         return missing
 
-    def add_urls(self, urls:list[str], max:int=0, format:str="", force:bool=False, workers:int=-1, tmp_dir:str|Path|None=None) -> None:
+    def add_urls(
+        self,
+        urls: list[str],
+        max: int = 0,
+        format: str = "",
+        force: bool = False,
+        workers: int = -1,
+        tmp_dir: str | Path | None = None,
+    ) -> None:
         """Downloads and adds sequences from a list of URLs to the SeqBank.
 
         This method processes a list of URLs, downloads the corresponding sequence files, and adds them to the SeqBank.
-        It filters out URLs that have already been processed unless `force=True` is specified, and it can limit the number 
+        It filters out URLs that have already been processed unless `force=True` is specified, and it can limit the number
         of URLs processed based on the `max` argument. The processing can be parallelized using the `workers` argument.
 
         Args:
@@ -370,7 +385,10 @@ class SeqBank():
             parallel = Parallel(n_jobs=workers, prefer="threads")
             add_url = delayed(self.add_url)
             overall_task = progress.add_task(f"[bold red]Adding URLs", total=len(urls_to_add))
-            parallel(add_url(url, progress=progress, format=format, force=force, overall_task=overall_task, tmp_dir=tmp_dir) for url in urls_to_add)
+            parallel(
+                add_url(url, progress=progress, format=format, force=force, overall_task=overall_task, tmp_dir=tmp_dir)
+                for url in urls_to_add
+            )
 
     def ls(self) -> None:
         """
@@ -384,7 +402,14 @@ class SeqBank():
         for k in self.file.keys():
             print(k.decode("ascii"))
 
-    def add_files(self, files:list[str], max:int=0, format:str="", workers:int=1, filter:Path|list[str]|set[str]|None=None) -> None:
+    def add_files(
+        self,
+        files: list[str],
+        max: int = 0,
+        format: str = "",
+        workers: int = 1,
+        filter: Path | list[str] | set[str] | None = None,
+    ) -> None:
         """
         Adds sequences from multiple files to the SeqBank.
 
@@ -407,9 +432,12 @@ class SeqBank():
             parallel = Parallel(n_jobs=workers, prefer="threads")
             add_file = delayed(self.add_file)
             overall_task = progress.add_task(f"[bold red]Adding files", total=len(files))
-            parallel(add_file(file, progress=progress, format=format, overall_task=overall_task, filter=filter) for file in files)
+            parallel(
+                add_file(file, progress=progress, format=format, overall_task=overall_task, filter=filter)
+                for file in files
+            )
 
-    def copy(self, other: 'SeqBank') -> None:
+    def copy(self, other: "SeqBank") -> None:
         """
         Copies all entries from the current SeqBank to another SeqBank instance.
 
@@ -482,7 +510,7 @@ class SeqBank():
         accessions = accessions or self.get_accessions()
 
         # Read list of accessions if given file
-        if isinstance(accessions, (str,Path)):
+        if isinstance(accessions, (str, Path)):
             accessions = Path(accessions).read_text().strip().split("\n")
 
         format = format or get_file_format(output)
@@ -492,7 +520,7 @@ class SeqBank():
 
     def lengths_dict(self) -> dict[str, int]:
         """
-        Returns a dictionary where the keys are the accessions and the values 
+        Returns a dictionary where the keys are the accessions and the values
         are the corresponding lengths of each sequence.
 
         Returns:
@@ -507,7 +535,7 @@ class SeqBank():
             accession_lengths[accession] = len(sequence)
 
         return accession_lengths
-    
+
     def histogram(self, nbins: int = 30) -> go.Figure:
         """
         Creates a histogram of the lengths of all sequences and returns the Plotly figure object.
@@ -526,12 +554,8 @@ class SeqBank():
 
         # Create the histogram using Plotly Express
         fig = px.histogram(lengths, nbins=nbins, title="Histogram of Sequence Lengths")
-        
+
         # Add labels and customize the layout, removing the legend
-        fig.update_layout(
-            xaxis_title="Sequence Length",
-            yaxis_title="Count",
-            showlegend=False  # Remove the legend
-        )
+        fig.update_layout(xaxis_title="Sequence Length", yaxis_title="Count", showlegend=False)  # Remove the legend
 
         return fig

@@ -4,4 +4,5 @@ class SeqBankError(Exception):
 
     This exception should be raised when any operation related to the SeqBank encounters an error.
     """
+
     pass

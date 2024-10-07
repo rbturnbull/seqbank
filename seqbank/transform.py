@@ -3,9 +3,9 @@ import numpy as np
 vocab_to_int = {"A": 1, "C": 2, "G": 3, "T": 4, "N": 0}
 int_to_vocab = dict(zip(vocab_to_int.values(), vocab_to_int.keys()))
 
-DELETE = bytes(range(256)).translate(None, b'ACGTNacgtn')
-TABLE = bytearray(b'\0' * 256)
-REVERSE_TABLE = bytearray(b'\0' * 256)
+DELETE = bytes(range(256)).translate(None, b"ACGTNacgtn")
+TABLE = bytearray(b"\0" * 256)
+REVERSE_TABLE = bytearray(b"\0" * 256)
 
 for char, value in vocab_to_int.items():
     TABLE[ord(char)] = value

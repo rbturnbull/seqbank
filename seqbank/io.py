@@ -24,10 +24,10 @@ def open_path(path: Path | str):
 
     if suffix == ".gz":
         return gzip.open(path, "rt")
-    
+
     if suffix == ".bz2":
         return bz2.open(path, "rt")
-    
+
     return open(path, "rt")
 
 
@@ -111,8 +111,8 @@ def download_file(url: str, local_path: Path) -> Path:
     """
     with requests.get(url, stream=True) as r:
         r.raise_for_status()
-        with open(local_path, 'wb') as f:
-            for chunk in r.iter_content(chunk_size=8192): 
+        with open(local_path, "wb") as f:
+            for chunk in r.iter_content(chunk_size=8192):
                 f.write(chunk)
     return local_path
 
@@ -136,7 +136,7 @@ class TemporaryDirectory(tempfile.TemporaryDirectory):
             prefix = str(prefix.resolve().absolute())
             if not prefix.endswith("/"):
                 prefix += "/"
-            
+
         super().__init__(prefix=prefix, *args, **kwargs)
 
     def cleanup(self):
@@ -147,7 +147,7 @@ class TemporaryDirectory(tempfile.TemporaryDirectory):
         for created_dir in self._created_dirs:
             if not any(created_dir.iterdir()):  # Only remove if the directory is empty
                 created_dir.rmdir()
-    
+
     def __enter__(self) -> Path:
         """
         Enters the context of the temporary directory.
