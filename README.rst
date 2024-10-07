@@ -4,7 +4,10 @@ Seqbank
 
 .. start-badges
 
-|testing badge| |coverage badge| |docs badge| |black badge| |git3moji badge|
+|pypi badge| |testing badge| |coverage badge| |docs badge| |black badge| |git3moji badge|
+
+.. |pypi badge| image:: https://img.shields.io/pypi/v/seqbank
+    :target: https://pypi.org/project/seqbank/
 
 .. |testing badge| image:: https://github.com/rbturnbull/seqbank/actions/workflows/testing.yml/badge.svg
     :target: https://github.com/rbturnbull/seqbank/actions
@@ -39,11 +42,17 @@ To install the latest version from the repository, you can use this command:
 
 .. code-block:: bash
 
+    pip install seqbank
+
+Or install directly from the GitHub repository:
+
+.. code-block:: bash
+
     pip install git+https://github.com/rbturnbull/seqbank.git
 
 .. note ::
 
-    Soon seqbank will be able to be installed using conda and PyPI
+    Soon seqbank will be able to be installed using conda.
 
 
 Usage
