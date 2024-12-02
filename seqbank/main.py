@@ -45,6 +45,7 @@ def add_sequence_from_file(
     print(f"Opening seqbank '{path}'")
     seqbank = SeqBank(path=path, write=True)
     seqbank.add_sequence_from_file(accession, file, format=format)
+    print(f"Added {accession} from {file.name}")
 
 
 @app.command()

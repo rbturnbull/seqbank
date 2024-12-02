@@ -290,8 +290,6 @@ class SeqBank:
                     self.add(record, accession)
 
 
-        print(f"Added {accession} from {path.name}")
-
     def seen_url(self, url: str) -> bool:
         """Checks if a given URL has been seen (i.e., processed) before and present in the SeqBank.
 
