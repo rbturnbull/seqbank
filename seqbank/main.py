@@ -1,14 +1,16 @@
 import typer
 from pathlib import Path
 from rich.progress import track
+import plotly.io as pio
 
 from .refseq import get_refseq_urls
 from .seqbank import SeqBank
 from .dfam import download_dfam
 
-import plotly.graph_objs as go
+pio.kaleido.scope.mathjax = None
 
-app = typer.Typer()
+
+app = typer.Typer(pretty_exceptions_enable=False)
 
 
 @app.command()
@@ -163,7 +165,7 @@ def export(path: Path, output: Path, format: str = "fasta") -> None:
 
 
 @app.command()
-def histogram(path: Path, output_path: Path = None, show: bool = False, nbins: int = 30) -> None:
+def histogram(path: Path, output_path: Path = None, show: bool = False, nbins: int = 30, min:int=0, max:int=0) -> None:
     """Generate a histogram of sequence lengths from a SeqBank.
 
     Args:
@@ -176,7 +178,7 @@ def histogram(path: Path, output_path: Path = None, show: bool = False, nbins: i
     seqbank = SeqBank(path=path)
 
     # Generate the histogram
-    fig: go.Figure = seqbank.histogram(nbins=nbins)
+    fig = seqbank.histogram(nbins=nbins, min=min, max=max)
 
     # Save the histogram to the specified output path
     if output_path is None:

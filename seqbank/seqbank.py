@@ -1,7 +1,5 @@
 from functools import cached_property
 import numpy as np
-import gzip
-import time
 from pathlib import Path
 from joblib import Parallel, delayed
 import plotly.express as px
@@ -20,7 +18,7 @@ import atexit
 from .transform import seq_to_bytes, bytes_to_str
 from .io import get_file_format, open_path, download_file, seq_count, TemporaryDirectory
 from .exceptions import SeqBankError
-from .utils import parse_filter
+from .utils import parse_filter, format_fig
 
 
 @define(slots=False)
@@ -582,12 +580,14 @@ class SeqBank:
 
         return accession_lengths
 
-    def histogram(self, nbins: int = 30) -> go.Figure:
+    def histogram(self, nbins: int = 30, max:int=0, min:int=0) -> go.Figure:
         """
         Creates a histogram of the lengths of all sequences and returns the Plotly figure object.
 
         Args:
             nbins (int): The number of bins for the histogram. Default is 30.
+            max (int): The maximum length of the sequence to include in the histogram. Default is all.
+            min (int): The minimum length of the sequence to include in the histogram. Default is 0.
 
         Returns:
             go.Figure: A Plotly figure object representing the histogram of sequence lengths.
@@ -596,12 +596,19 @@ class SeqBank:
         accession_lengths = self.lengths_dict()
 
         # Extract the lengths from the dictionary
-        lengths = list(accession_lengths.values())
+        lengths = np.array(list(accession_lengths.values()))
+
+        if max:
+            lengths = lengths[lengths <= max]
+        if min:
+            lengths = lengths[lengths >= min]
 
         # Create the histogram using Plotly Express
         fig = px.histogram(lengths, nbins=nbins, title="Histogram of Sequence Lengths")
 
         # Add labels and customize the layout, removing the legend
         fig.update_layout(xaxis_title="Sequence Length", yaxis_title="Count", showlegend=False)  # Remove the legend
+
+        format_fig(fig)
 
         return fig

@@ -430,7 +430,7 @@ def test_histogram(setup_seqbank):
     seqbank = setup_seqbank
 
     # Generate the histogram figure
-    fig = seqbank.histogram()
+    fig = seqbank.histogram(max=1000, min=1)
 
     # Check that fig is a Plotly Figure object
     assert isinstance(fig, go.Figure)
