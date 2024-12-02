@@ -27,6 +27,27 @@ def add(path: Path, files: list[Path], format: str = "", filter: Path = None) ->
 
 
 @app.command()
+def add_sequence_from_file(
+    path: Path, 
+    accession:str, 
+    file: Path, 
+    format: str = "",
+) -> None:
+    """
+    Add a sequence from a file with a single sequence to a SeqBank.
+
+    Args:
+        path (Path): The path to the SeqBank.
+        files (list[Path]): A list of file paths containing sequences.
+        format (str, optional): The format of the sequence files. Defaults to "".
+        filter (Path, optional): A filter file for sequences. Defaults to None.
+    """
+    print(f"Opening seqbank '{path}'")
+    seqbank = SeqBank(path=path, write=True)
+    seqbank.add_sequence_from_file(accession, file, format=format)
+
+
+@app.command()
 def url(path: Path, urls: list[str], format: str = "", max: int = 0, workers: int = -1, tmp_dir: Path = None) -> None:
     """Add sequences from a list of URLs to a SeqBank.
 

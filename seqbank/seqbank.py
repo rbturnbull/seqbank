@@ -194,7 +194,12 @@ class SeqBank:
         self.file[key] = seq
 
     def add_file(
-        self, path: Path, format: str = "", progress=None, overall_task=None, filter: Path | list | set | None = None
+        self, 
+        path: Path, 
+        format: str = "", 
+        progress=None, 
+        overall_task=None, 
+        filter: Path | list | set | None = None,
     ) -> None:
         """Adds sequences from a file to the SeqBank.
 
@@ -242,6 +247,50 @@ class SeqBank:
             progress.update(overall_task, advance=1)
 
         print("Added", path.name)
+
+    def add_sequence_from_file(
+        self, 
+        accession: str, 
+        path: Path, 
+        format: str = "",
+    ) -> None:
+        """
+        Adds a single sequence from a file to the SeqBank.
+
+        This method processes a single sequence from a file in various formats (e.g., FASTA, FASTQ).
+        The accession for this sequence is provided as an argument.
+
+        Args:
+            accession (str): The accession key for the sequence to be stored under.
+            path (Path): The path to the sequence file.
+            format (str, optional): The format of the sequence file (e.g., "fasta", "fastq"). If not provided, it will be auto-detected.
+
+        Returns:
+            None
+        """
+        format = format or get_file_format(path)
+
+        def check_total(total: int, path: Path) -> None:
+            if total > 1:
+                raise SeqBankError(f"Multiple sequences found in {path}, found {total}")
+
+        # If fasta or fastq use pyfastx for speed
+        if format in ["fasta", "fastq"]:
+            total = sum(1 for _ in pyfastx.Fasta(str(path), build_index=False))
+            check_total(total, path)
+
+            for _, seq in pyfastx.Fasta(str(path), build_index=False):
+                self.add(seq, accession)
+        else:
+            total = seq_count(path)
+            check_total(total, path)
+
+            with open_path(path) as f:
+                for record in SeqIO.parse(f, format):
+                    self.add(record, accession)
+
+
+        print(f"Added {accession} from {path.name}")
 
     def seen_url(self, url: str) -> bool:
         """Checks if a given URL has been seen (i.e., processed) before and present in the SeqBank.
@@ -405,7 +454,6 @@ class SeqBank:
     def add_files(
         self,
         files: list[str],
-        max: int = 0,
         format: str = "",
         workers: int = 1,
         filter: Path | list[str] | set[str] | None = None,

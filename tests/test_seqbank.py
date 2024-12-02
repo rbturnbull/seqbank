@@ -44,6 +44,26 @@ def test_seqbank_add_file():
         seqbank.add_file(TEST_DATA_PATH/"NC_036113.1.fasta")
         assert len(seqbank["NC_036113.1"]) == 1050
 
+
+def test_add_sequence_from_file():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        seqbank = SeqBank(path=tmpdirname/"seqbank.sb", write=True)
+
+        seqbank.add_sequence_from_file("NC_024664", TEST_DATA_PATH/"NC_024664.1.trunc.fasta")
+        assert "NC_024664" in seqbank
+        assert "NC_024664.1" not in seqbank
+        assert len(seqbank["NC_024664"]) == 840
+
+        seqbank.add_sequence_from_file("NC_010663", TEST_DATA_PATH/"NC_010663.1.gb")
+        assert "NC_010663.1" not in seqbank
+        assert len(seqbank["NC_010663"]) == 1066
+
+        # check assert fails for multiple sequences
+        with pytest.raises(SeqBankError):
+            seqbank.add_sequence_from_file("5seq", TEST_DATA_PATH/"5seq.fa.gz")
+
+
 def test_seqbank_add_file_fasta_with_filter_skip():
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
@@ -153,6 +173,7 @@ def test_export_tsv_with_accessions():
         assert 'NC_024664.1\tTAAAAAGAAAAA' in text
         assert 'NC_010663.1\tAGTTTTAAAC' in text
 
+
 @pytest.fixture
 def prepare_accession_file():
     # Create a temporary file with a list of accessions
@@ -162,6 +183,7 @@ def prepare_accession_file():
     yield accession_file
     # Clean up
     accession_file.unlink()
+
 
 def test_export_from_file(prepare_accession_file):
     seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
@@ -181,10 +203,12 @@ def test_export_from_file(prepare_accession_file):
         assert ">NC_010663.1\nAGTTTTAAACCTCTGATCGAAC" in text
         assert len(text) > 100  # Adjust the length check based on actual content
 
+
 def test_get_acccessions():
     seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
     accessions = seqbank.get_accessions()
     assert accessions == {'NC_036112.1', 'NC_024664.1', 'NC_010663.1', 'NC_036113.1', 'NC_044840.1', 'NZ_JAJNFP010000161.1'}
+
 
 def test_close():
     with tempfile.TemporaryDirectory() as tmpdirname:

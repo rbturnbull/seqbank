@@ -4,13 +4,10 @@ from seqbank.main import app
 from seqbank.seqbank import SeqBank
 from unittest.mock import patch, MagicMock
 from pathlib import Path
-from seqbank.dfam import download_dfam, add_dfam
-import plotly.graph_objs as go
 import shutil
 import pytest
 import h5py
 
-from .test_seqbank import setup_seqbank
 
 TEST_DATA_PATH = Path(__file__).parent / "testdata"
 
@@ -21,8 +18,8 @@ def test_export():
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
 
-        exported_path = tmpdirname/"test_main_export.fasta"
-        result = runner.invoke(app, ["export", str(TEST_DATA_PATH/"seqbank.sb"), str(exported_path)])
+        exported_path = tmpdirname / "test_main_export.fasta"
+        result = runner.invoke(app, ["export", str(TEST_DATA_PATH / "seqbank.sb"), str(exported_path)])
         assert result.exit_code == 0
         assert exported_path.exists()
         text = exported_path.read_text()
@@ -37,38 +34,40 @@ def test_export():
 
 
 def test_count():
-    result = runner.invoke(app, ["count", str(TEST_DATA_PATH/"seqbank.sb")])
+    result = runner.invoke(app, ["count", str(TEST_DATA_PATH / "seqbank.sb")])
     assert result.exit_code == 0
     assert "6\n" in result.stdout
 
 
 def test_ls():
-    result = runner.invoke(app, ["ls", str(TEST_DATA_PATH/"seqbank.sb")])
+    result = runner.invoke(app, ["ls", str(TEST_DATA_PATH / "seqbank.sb")])
     assert result.exit_code == 0
-    assert result.stdout == 'NC_010663.1\nNC_024664.1\nNC_036112.1\nNC_036113.1\nNC_044840.1\nNZ_JAJNFP010000161.1\n'
+    assert result.stdout == "NC_010663.1\nNC_024664.1\nNC_036112.1\nNC_036113.1\nNC_044840.1\nNZ_JAJNFP010000161.1\n"
 
 
 def test_cp():
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
 
-        new_path = tmpdirname/"new.sb"
+        new_path = tmpdirname / "new.sb"
         assert new_path.exists() == False
-        result = runner.invoke(app, ["cp", str(TEST_DATA_PATH/"seqbank.sb"), str(new_path)])
+        result = runner.invoke(app, ["cp", str(TEST_DATA_PATH / "seqbank.sb"), str(new_path)])
         assert result.exit_code == 0
         assert new_path.exists()
 
         result = runner.invoke(app, ["ls", str(new_path)])
         assert result.exit_code == 0
-        assert result.stdout == 'NC_010663.1\nNC_024664.1\nNC_036112.1\nNC_036113.1\nNC_044840.1\nNZ_JAJNFP010000161.1\n'
+        assert (
+            result.stdout == "NC_010663.1\nNC_024664.1\nNC_036112.1\nNC_036113.1\nNC_044840.1\nNZ_JAJNFP010000161.1\n"
+        )
 
 
 def test_delete():
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
-        new_path = tmpdirname/"new.sb"
+        new_path = tmpdirname / "new.sb"
 
-        shutil.copytree(TEST_DATA_PATH/"seqbank.sb", new_path)
+        shutil.copytree(TEST_DATA_PATH / "seqbank.sb", new_path)
 
         result = runner.invoke(app, ["delete", str(new_path), "NC_010663.1"])
         assert result.exit_code == 0
@@ -76,15 +75,23 @@ def test_delete():
         result = runner.invoke(app, ["ls", str(new_path)])
         assert result.exit_code == 0
         assert "NC_010663.1\n" not in result.stdout
-        assert 'NC_024664.1\nNC_036112.1\nNC_036113.1\nNC_044840.1\nNZ_JAJNFP010000161.1\n' in result.stdout
+        assert "NC_024664.1\nNC_036112.1\nNC_036113.1\nNC_044840.1\nNZ_JAJNFP010000161.1\n" in result.stdout
 
 
 def test_add():
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
-        new_path = tmpdirname/"new.sb"
+        new_path = tmpdirname / "new.sb"
 
-        result = runner.invoke(app, ["add", str(new_path), str(TEST_DATA_PATH/"NC_036113.1.fasta"), str(TEST_DATA_PATH/"NC_024664.1.trunc.fasta")])
+        result = runner.invoke(
+            app,
+            [
+                "add",
+                str(new_path),
+                str(TEST_DATA_PATH / "NC_036113.1.fasta"),
+                str(TEST_DATA_PATH / "NC_024664.1.trunc.fasta"),
+            ],
+        )
         assert result.exit_code == 0
 
         result = runner.invoke(app, ["count", str(new_path)])
@@ -92,26 +99,59 @@ def test_add():
         assert "2\n" in result.stdout
 
 
+def test_add_sequence_from_file():
+    with tempfile.TemporaryDirectory() as tmpdirname:
+        tmpdirname = Path(tmpdirname)
+        new_path = tmpdirname / "new.sb"
+
+        result = runner.invoke(
+            app,
+            [
+                "add-sequence-from-file",
+                str(new_path),
+                "NC_036113",
+                str(TEST_DATA_PATH / "NC_036113.1.fasta"),
+            ],
+        )
+        assert result.exit_code == 0
+
+        result = runner.invoke(app, ["count", str(new_path)])
+        assert result.exit_code == 0
+        assert "1\n" in result.stdout
+
+        result = runner.invoke(app, ["ls", str(new_path)])
+        assert result.exit_code == 0
+        assert "NC_036113\n" == result.stdout
+
+
 def test_add_fail():
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
-        new_path = tmpdirname/"new.sb"
+        new_path = tmpdirname / "new.sb"
 
-        result = runner.invoke(app, ["add", str(new_path), str(TEST_DATA_PATH/"NC_036113.1.NOT_HERE"), str(TEST_DATA_PATH/"NC_024664.1.trunc.fasta")])
+        result = runner.invoke(
+            app,
+            [
+                "add",
+                str(new_path),
+                str(TEST_DATA_PATH / "NC_036113.1.NOT_HERE"),
+                str(TEST_DATA_PATH / "NC_024664.1.trunc.fasta"),
+            ],
+        )
         assert result.exit_code == 1
 
 
 def copy_dummy_fasta(url, path):
     if "NC_036113.1.fasta" in url:
-        shutil.copy(TEST_DATA_PATH/"NC_036113.1.fasta", path)
+        shutil.copy(TEST_DATA_PATH / "NC_036113.1.fasta", path)
     elif "NC_024664.1.trunc.fasta" in url:
-        shutil.copy(TEST_DATA_PATH/"NC_024664.1.trunc.fasta", path)
+        shutil.copy(TEST_DATA_PATH / "NC_024664.1.trunc.fasta", path)
 
 
 def test_url():
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
-        new_path = tmpdirname/"new.sb"
+        new_path = tmpdirname / "new.sb"
 
         with patch("seqbank.seqbank.download_file", copy_dummy_fasta):
             result = runner.invoke(app, ["url", str(new_path), "http://example.com/NC_036113.1.fasta"])
@@ -119,15 +159,17 @@ def test_url():
 
         result = runner.invoke(app, ["ls", str(new_path)])
         assert result.exit_code == 0
-        assert result.stdout == '/seqbank/url/http://example.com/NC_036113.1.fasta\nNC_036113.1\n'
+        assert result.stdout == "/seqbank/url/http://example.com/NC_036113.1.fasta\nNC_036113.1\n"
+
 
 def mock_get_refseq_urls(*args, **kwargs):
     return ["http://example.com/NC_036113.1.fasta", "http://example.com/NC_024664.1.trunc.fasta"]
 
+
 def test_refseq():
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
-        new_path = tmpdirname/"new.sb"
+        new_path = tmpdirname / "new.sb"
 
         # Patch the get_refseq_urls to return our mock URLs and patch download_file to copy test data
         with patch("seqbank.main.get_refseq_urls", mock_get_refseq_urls):
@@ -138,8 +180,9 @@ def test_refseq():
         # Check that the sequences have been added correctly
         result = runner.invoke(app, ["ls", str(new_path)])
         assert result.exit_code == 0
-        assert 'NC_024664.1\n' in result.stdout
-        assert 'NC_036113.1\n' in result.stdout
+        assert "NC_024664.1\n" in result.stdout
+        assert "NC_036113.1\n" in result.stdout
+
 
 @pytest.fixture
 def seqbank_with_temp_dir():
@@ -149,26 +192,28 @@ def seqbank_with_temp_dir():
     yield seqbank, Path(temp_dir.name)
     temp_dir.cleanup()
 
+
 @pytest.fixture
 def temp_hdf5_file():
     """Fixture to create a temporary HDF5 file with test data."""
-    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.h5')
+    temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".h5")
     file_path = Path(temp_file.name)
 
     # Create HDF5 file with test data
-    with h5py.File(file_path, 'w') as f:
-        group = f.create_group('Families/DF')
-        dataset = group.create_dataset('test_dataset', data=[], dtype='S1')
-        dataset.attrs['accession'] = 'DF000001.1'
-        dataset.attrs['consensus'] = 'Mock sequence data for DF000001.1'
-        dataset = group.create_dataset('test_dataset2', data=[], dtype='S1')
-        dataset.attrs['accession'] = 'DF000002.1'
-        dataset.attrs['consensus'] = 'Mock sequence data for DF000002.1'
-    
+    with h5py.File(file_path, "w") as f:
+        group = f.create_group("Families/DF")
+        dataset = group.create_dataset("test_dataset", data=[], dtype="S1")
+        dataset.attrs["accession"] = "DF000001.1"
+        dataset.attrs["consensus"] = "Mock sequence data for DF000001.1"
+        dataset = group.create_dataset("test_dataset2", data=[], dtype="S1")
+        dataset.attrs["accession"] = "DF000002.1"
+        dataset.attrs["consensus"] = "Mock sequence data for DF000002.1"
+
     yield file_path
 
     # Clean up the temporary file
     file_path.unlink()
+
 
 def mock_add_dfam(seqbank: SeqBank, local_path: Path):
     """Mock function to simulate adding sequences to SeqBank."""
@@ -176,7 +221,8 @@ def mock_add_dfam(seqbank: SeqBank, local_path: Path):
     seqbank.add(seq="Mock sequence data for DF000001.1", accession="DF000001.1")
     seqbank.add(seq="Mock sequence data for DF000002.1", accession="DF000002.1")
 
-@patch('seqbank.dfam.download_dfam')
+
+@patch("seqbank.dfam.download_dfam")
 def test_dfam(mock_download_dfam, seqbank_with_temp_dir, temp_hdf5_file):
     """Test the dfam command."""
     seqbank, _ = seqbank_with_temp_dir
@@ -193,27 +239,29 @@ def test_dfam(mock_download_dfam, seqbank_with_temp_dir, temp_hdf5_file):
     assert result.exit_code == 0, f"DFAM command failed with error: {result.output}"
 
 
-
 def test_histogram_with_output_path():
     """Test the histogram command with an output path specified."""
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
 
         output_path = tmpdirname / "temp_histogram.png"
-        
+
         runner = CliRunner()
 
         # Run the histogram command with an output path
-        result = runner.invoke(app, ["histogram", str(TEST_DATA_PATH / "seqbank.sb"), "--output-path", str(output_path)])
+        result = runner.invoke(
+            app, ["histogram", str(TEST_DATA_PATH / "seqbank.sb"), "--output-path", str(output_path)]
+        )
 
         # Check the output message
         assert "Histogram saved to" in result.output
         assert output_path.exists()
         assert result.exit_code == 0
 
+
 def test_histogram_without_output_path():
     """Test the histogram command without specifying an output path."""
-    
+
     # Mock the show method of the figure object
     with patch("plotly.graph_objs.Figure.show") as mock_show:
         runner = CliRunner()
@@ -226,9 +274,10 @@ def test_histogram_without_output_path():
 
         # Assert that no save message appears
         assert "Histogram saved to" not in result.output
-        
+
         # Assert the command ran successfully
         assert result.exit_code == 0
+
 
 def test_histogram_with_show():
     """Test the histogram command with the --show option."""
