@@ -124,7 +124,10 @@ def test_temporary_directory_with_path_prefix():
         assert tmp_dir.parent == prefix.resolve().absolute()
 
 
-def test_temporary_directory_resolves_prefix_path():
+def test_temporary_directory_resolves_prefix_path(tmp_path, monkeypatch):
+    working = tmp_path / "working"
+    working.mkdir()
+    monkeypatch.chdir(working)
     prefix = Path("../tmp")
     with TemporaryDirectory(prefix=prefix) as tmp_dir:
         assert tmp_dir.parent == prefix.resolve().absolute()

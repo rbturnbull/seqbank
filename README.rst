@@ -6,7 +6,7 @@ Seqbank
 
 |pypi badge| |testing badge| |coverage badge| |docs badge| |black badge| |git3moji badge|
 
-.. |pypi badge| image:: https://img.shields.io/pypi/v/seqbank
+.. |pypi badge| image:: https://img.shields.io/pypi/v/seqbank?color=blue
     :target: https://pypi.org/project/seqbank/
 
 .. |testing badge| image:: https://github.com/rbturnbull/seqbank/actions/workflows/testing.yml/badge.svg
@@ -43,6 +43,10 @@ To install seqbank from PyPI, you can use this command:
 .. code-block:: bash
 
     pip install seqbank
+
+RocksDict and LMDB are installed by default. Legacy Speedict banks additionally
+require ``pip install 'seqbank[speedict]'`` on Python 3.10–3.12.
+See the Storage engines section for selection and conversion.
 
 Or install directly from the GitHub repository:
 
@@ -181,7 +185,8 @@ SeqBank allows you to copy sequences from one SeqBank database to another, facil
 
 **Example:**
 
-To copy sequences from a source SeqBank to a destination SeqBank:
+To copy sequences from a source SeqBank to a destination SeqBank (a new
+destination uses RocksDict by default):
 
 .. code-block:: bash
 
@@ -221,8 +226,110 @@ Credits
 
 .. start-credits
 
-* Robert Turnbull <robert.turnbull@unimelb.edu.au>
+* `Robert Turnbull <https://robturnbull.com>`_
 * Rafsan Al Mamun <rafsan7238@gmail.com>
 
 .. end-credits
 
+
+.. start-storage
+
+.. _storage-engines:
+
+Storage engines
+===============
+
+SeqBank supports RocksDict (the default for new banks), LMDB, and Speedict.
+RocksDict and LMDB are included in a normal installation::
+
+    pip install seqbank
+
+Speedict remains optional for legacy banks (Python 3.10–3.12)::
+
+    pip install 'seqbank[speedict]'
+
+For example, create an LMDB bank from FASTA and then reopen it without an
+engine option::
+
+    seqbank add sequences.sb input.fasta --engine lmdb
+    seqbank count sequences.sb
+
+Choose an engine in Python when creating a bank::
+
+    from seqbank import Engine, SeqBank
+
+    bank = SeqBank('sequences.sb', write=True, engine=Engine.LMDB)
+    bank.add('ACGTN', 'example')
+    bank.close()
+
+    bank = SeqBank('sequences.sb')  # engine detected automatically
+    sequence = bank['example']
+    bank.close()
+
+The Python API accepts ``Engine.ROCKSDICT``, ``Engine.LMDB``, and
+``Engine.SPEEDICT`` or their string values. Typer validates CLI engine choices
+and lists them in ``--help``.
+
+Creation commands (``add``, ``add-sequence-from-file``, ``url``, ``refseq``,
+and ``dfam``) accept ``--engine``. RocksDict is the default for new banks;
+there is no silent fallback to another backend.
+
+Banks are directories. New banks contain ``seqbank.json`` with their engine
+and format version. Existing banks without this file are treated as legacy
+Speedict banks; opening one for reading does not modify it. Keep the metadata
+file with the database when copying or distributing it. An explicitly requested
+engine must match an existing bank. Long URL tracking keys are stored as
+SHA-256 digests within the internal namespace to respect LMDB key limits.
+
+Convert to another engine in a new directory::
+
+    seqbank convert old.sb new.sb --engine lmdb
+
+Conversion copies all records, including URL tracking records. It never
+overwrites an existing destination. If conversion fails, remove the incomplete
+destination before retrying. Reading a bank requires its corresponding backend;
+conversion from Speedict therefore needs an environment with Speedict installed.
+
+The existing parallel import commands use threads sharing one database handle.
+LMDB also permits independent local processes to open the bank and write, with
+write transactions serialized by LMDB. Open each handle inside its process;
+do not pass open handles between processes. RocksDict and Speedict require a
+single writer process, which can receive data prepared by other workers.
+
+Batching and performance
+------------------------
+
+``add_file()`` and ``add_files()``, FASTA/FASTQ/GenBank URL imports (including RefSeq),
+and copying/conversion group writes into batches of up to 1,000 records or
+approximately 8 MiB of keys and values. A single record may exceed that limit.
+Each LMDB batch commits in one transaction. Individual ``add()`` calls still
+commit separately and can be substantially slower for bulk loading. DFam
+HDF5 imports currently call ``add()`` per sequence and are not batched.
+
+Local synthetic benchmarks found LMDB faster for warm random reads, while
+Speedict and RocksDict imported faster and generally used less disk space.
+These results compare current settings: LMDB synchronizes each write transaction,
+whereas Speedict and RocksDict use non-sync WAL writes by default. They are not
+an equal-durability comparison or a prediction for banks larger than memory.
+The repository's ``benchmarks/results.md`` contains measurements and limits;
+``benchmarks/storage.py`` reproduces the benchmark.
+
+LMDB reserves a 1 TiB virtual address map on 64-bit systems, not 1 TiB of RAM;
+actual disk usage grows with stored data. Values are returned as owned bytes,
+so they remain valid after their read transaction ends.
+
+.. end-storage
+
+.. start-image-export
+
+Static image export
+===================
+
+Histogram image export uses Plotly and Kaleido 1.x and requires Chrome or
+Chromium installed on the machine. If Chrome is not already installed, run::
+
+    poetry run plotly_get_chrome -y
+
+A browser is not needed to create figures or display the interactive histogram.
+
+.. end-image-export

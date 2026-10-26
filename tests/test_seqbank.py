@@ -9,6 +9,7 @@ from unittest.mock import patch, MagicMock
 
 
 TEST_DATA_PATH = Path(__file__).parent / "testdata"
+TEST_BANK_PATH = None  # Populated by the portable_test_bank fixture.
 
 
 def test_seqbank_add():
@@ -117,7 +118,7 @@ def test_record():
         
 
 def test_string():
-    seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
+    seqbank = SeqBank(path=TEST_BANK_PATH)
     
     string = seqbank.string("NC_036113.1")
     assert isinstance(string, str)
@@ -127,7 +128,7 @@ def test_string():
         
 
 def test_record():
-    seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
+    seqbank = SeqBank(path=TEST_BANK_PATH)
 
     record = seqbank.record("NC_010663.1")
     assert len(record) == 1066
@@ -138,7 +139,7 @@ def test_record():
 
 
 def test_export():
-    seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
+    seqbank = SeqBank(path=TEST_BANK_PATH)
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
@@ -159,7 +160,7 @@ def test_export():
 
 
 def test_export_tsv_with_accessions():
-    seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
+    seqbank = SeqBank(path=TEST_BANK_PATH)
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
@@ -186,7 +187,7 @@ def prepare_accession_file():
 
 
 def test_export_from_file(prepare_accession_file):
-    seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
+    seqbank = SeqBank(path=TEST_BANK_PATH)
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
@@ -205,7 +206,7 @@ def test_export_from_file(prepare_accession_file):
 
 
 def test_get_acccessions():
-    seqbank = SeqBank(path=TEST_DATA_PATH/"seqbank.sb")
+    seqbank = SeqBank(path=TEST_BANK_PATH)
     accessions = seqbank.get_accessions()
     assert accessions == {'NC_036112.1', 'NC_024664.1', 'NC_010663.1', 'NC_036113.1', 'NC_044840.1', 'NZ_JAJNFP010000161.1'}
 
@@ -544,4 +545,5 @@ def test_add_urls_max(mock_delayed, mock_parallel, mock_add_url, seqbank):
 
     # Check the URLs that were passed to add_url
     called_urls = [call[0][0] for call in mock_add_url.call_args_list]
-    assert called_urls == urls[:max_urls]
+    # Thread scheduling does not guarantee invocation order.
+    assert sorted(called_urls) == sorted(urls[:max_urls])

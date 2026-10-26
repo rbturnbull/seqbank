@@ -12,6 +12,8 @@
 #
 import os
 import sys
+from pathlib import Path
+import re
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -23,9 +25,10 @@ copyright = "2023, Robert Turnbull"
 author = "Robert Turnbull"
 
 # The full version, including alpha/beta/rc tags
-release = "0.1.0"
-# import importlib.metadata
-# release = importlib.metadata.version('seqbank')
+# Read the source metadata so local docs match the version being released.
+release = re.search(r'^version = "([^"]+)"',
+                    (Path(__file__).resolve().parents[1] / "pyproject.toml").read_text(),
+                    re.MULTILINE).group(1)
 
 
 # -- General configuration ---------------------------------------------------
@@ -41,7 +44,6 @@ extensions = [
     "sphinx.ext.coverage",
     "sphinx.ext.napoleon",
     "sphinx_copybutton",
-    "sphinx_click",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -63,4 +65,4 @@ html_theme = "sphinx_rtd_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ["_static"]
+html_static_path = []

@@ -10,6 +10,7 @@ import h5py
 
 
 TEST_DATA_PATH = Path(__file__).parent / "testdata"
+TEST_BANK_PATH = None  # Populated by the portable_test_bank fixture.
 
 runner = CliRunner()
 
@@ -19,7 +20,7 @@ def test_export():
         tmpdirname = Path(tmpdirname)
 
         exported_path = tmpdirname / "test_main_export.fasta"
-        result = runner.invoke(app, ["export", str(TEST_DATA_PATH / "seqbank.sb"), str(exported_path)])
+        result = runner.invoke(app, ["export", str(TEST_BANK_PATH), str(exported_path)])
         assert result.exit_code == 0
         assert exported_path.exists()
         text = exported_path.read_text()
@@ -34,13 +35,13 @@ def test_export():
 
 
 def test_count():
-    result = runner.invoke(app, ["count", str(TEST_DATA_PATH / "seqbank.sb")])
+    result = runner.invoke(app, ["count", str(TEST_BANK_PATH)])
     assert result.exit_code == 0
     assert "6\n" in result.stdout
 
 
 def test_ls():
-    result = runner.invoke(app, ["ls", str(TEST_DATA_PATH / "seqbank.sb")])
+    result = runner.invoke(app, ["ls", str(TEST_BANK_PATH)])
     assert result.exit_code == 0
     assert result.stdout == "NC_010663.1\nNC_024664.1\nNC_036112.1\nNC_036113.1\nNC_044840.1\nNZ_JAJNFP010000161.1\n"
 
@@ -51,7 +52,7 @@ def test_cp():
 
         new_path = tmpdirname / "new.sb"
         assert new_path.exists() == False
-        result = runner.invoke(app, ["cp", str(TEST_DATA_PATH / "seqbank.sb"), str(new_path)])
+        result = runner.invoke(app, ["cp", str(TEST_BANK_PATH), str(new_path)])
         assert result.exit_code == 0
         assert new_path.exists()
 
@@ -67,7 +68,7 @@ def test_delete():
         tmpdirname = Path(tmpdirname)
         new_path = tmpdirname / "new.sb"
 
-        shutil.copytree(TEST_DATA_PATH / "seqbank.sb", new_path)
+        shutil.copytree(TEST_BANK_PATH, new_path)
 
         result = runner.invoke(app, ["delete", str(new_path), "NC_010663.1"])
         assert result.exit_code == 0
@@ -250,13 +251,12 @@ def test_histogram_with_output_path():
 
         # Run the histogram command with an output path
         result = runner.invoke(
-            app, ["histogram", str(TEST_DATA_PATH / "seqbank.sb"), "--output-path", str(output_path)]
+            app, ["histogram", str(TEST_BANK_PATH), "--output-path", str(output_path)]
         )
 
-        # Check the output message
+        assert result.exit_code == 0, repr(result.exception)
         assert "Histogram saved to" in result.output
-        assert output_path.exists()
-        assert result.exit_code == 0
+        assert output_path.read_bytes().startswith(b"\x89PNG\r\n\x1a\n")
 
 
 def test_histogram_without_output_path():
@@ -267,7 +267,7 @@ def test_histogram_without_output_path():
         runner = CliRunner()
 
         # Run the histogram command without an output path
-        result = runner.invoke(app, ["histogram", str(TEST_DATA_PATH / "seqbank.sb")])
+        result = runner.invoke(app, ["histogram", str(TEST_BANK_PATH)])
 
         # Since output_path is None, show should be set to True, and fig.show() should be called
         mock_show.assert_called_once()
@@ -287,7 +287,7 @@ def test_histogram_with_show():
         runner = CliRunner()
 
         # Run the histogram command with the --show option
-        result = runner.invoke(app, ["histogram", str(TEST_DATA_PATH / "seqbank.sb"), "--show"])
+        result = runner.invoke(app, ["histogram", str(TEST_BANK_PATH), "--show"])
 
         # Assert that fig.show() was called
         mock_show.assert_called_once()

@@ -1,4 +1,3 @@
-from functools import cached_property
 import numpy as np
 from pathlib import Path
 from joblib import Parallel, delayed
@@ -12,7 +11,8 @@ from rich.progress import track
 import pyfastx
 from rich.progress import Progress, TimeElapsedColumn, MofNCompleteColumn
 from datetime import datetime
-from speedict import Rdict, Options, DBCompressionType, AccessType
+from .storage import Engine, open_storage
+from threading import RLock
 import atexit
 
 from .transform import seq_to_bytes, bytes_to_str
@@ -23,8 +23,22 @@ from .utils import parse_filter, format_fig
 
 @define(slots=False)
 class SeqBank:
+    """Store encoded DNA sequences in an engine-backed database directory.
+
+    Args:
+        path: Directory containing the bank and its engine metadata.
+        write: Allow creating or modifying the bank. Defaults to read-only.
+        engine: ``rocksdict``, ``lmdb``, or ``speedict``. When omitted, existing
+            banks are detected automatically and new banks use RocksDict.
+            Banks without metadata are treated as legacy Speedict banks.
+            RocksDict and LMDB are included; Speedict requires ``seqbank[speedict]``.
+
+    File imports and copies use bounded batches. Individual :meth:`add` calls
+    commit separately; prefer :meth:`add_file` for bulk LMDB imports.
+    """
     path: Path
     write: bool = False
+    engine: Engine | str | None = None
 
     def __attrs_post_init__(self) -> None:
         """Initializes the SeqBank object after attributes are set.
@@ -35,6 +49,7 @@ class SeqBank:
             FileNotFoundError: If the SeqBank file is not found at the given path when write mode is disabled.
         """
         self.path = Path(self.path).expanduser()
+        self._open_lock = RLock()
         if not self.write and not self.path.exists():
             raise FileNotFoundError(f"Cannot find SeqBank file at path: {self.path}")
 
@@ -70,30 +85,20 @@ class SeqBank:
         except Exception:
             pass
 
-    @cached_property
-    def file(self) -> Rdict:
-        """Initializes and configures the Rdict database for sequence storage.
+    @property
+    def file(self):
+        """Open the selected storage engine lazily, safely across import threads."""
+        if "_db" in self.__dict__:
+            return self._db
+        with self._open_lock:
+            if "_db" not in self.__dict__:
+                self._db, self.engine = open_storage(self.path, self.write, self.engine)
+                atexit.register(self.close)
+            return self._db
 
-        Configures options for the database, such as compression type, optimization, and maximum open files.
-        Registers the close method to be executed upon program exit to ensure the database is closed.
-
-        Returns:
-            Rdict: The configured Rdict database object.
-        """
-        options = Options(raw_mode=True)
-        options.set_compression_type(DBCompressionType.none())
-        options.set_optimize_filters_for_hits(True)
-        options.optimize_for_point_lookup(1024)
-        options.set_max_open_files(500)
-
-        self._db = Rdict(
-            path=str(self.path),
-            options=options,
-            access_type=AccessType.read_write() if self.write else AccessType.read_only(),
-        )
-
-        atexit.register(self.close)
-        return self._db
+    @file.setter
+    def file(self, storage):
+        self._db = storage
 
     def __len__(self) -> int:
         """Calculates the total number of items in the SeqBank.
@@ -214,6 +219,20 @@ class SeqBank:
         Returns:
             None
         """
+        batch, batch_size = [], 0
+
+        def add_record(seq, accession):
+            nonlocal batch, batch_size
+            if isinstance(seq, SeqRecord):
+                seq = seq.seq
+            value = seq_to_bytes(str(seq))
+            key = self.key(accession)
+            batch.append((key, value))
+            batch_size += len(key) + len(value)
+            if len(batch) >= 1000 or batch_size >= 8 * 1024 * 1024:
+                self.file.put_many(batch)
+                batch, batch_size = [], 0
+
         filter = parse_filter(filter)
         format = format or get_file_format(path)
         progress = progress or Progress()
@@ -226,7 +245,7 @@ class SeqBank:
             for accession, seq in pyfastx.Fasta(str(path), build_index=False):
                 if filter and accession not in filter:
                     continue
-                self.add(seq, accession)
+                add_record(seq, accession)
                 progress.update(task, advance=1)
         else:
             total = seq_count(path)
@@ -237,8 +256,11 @@ class SeqBank:
                     if filter and record.id not in filter:
                         continue
 
-                    self.add(record, record.id)
+                    add_record(record, record.id)
                     progress.update(task, advance=1)
+
+        if batch:
+            self.file.put_many(batch)
 
         progress.update(task, visible=False)
         if overall_task is not None:
@@ -494,8 +516,19 @@ class SeqBank:
         Returns:
             None
         """
+        # Bound batches by payload size as sequence lengths vary considerably.
+        batch, size = [], 0
         for k, v in track(self.file.items()):
-            other.file[k] = v
+            batch.append((k, v))
+            size += len(k) + len(v)
+            if size >= 8 * 1024 * 1024 or len(batch) >= 1000:
+                other.file.put_many(batch)
+                batch, size = [], 0
+        if batch:
+            other.file.put_many(batch)
+        else:
+            # Create even an empty destination bank.
+            other.file
 
     def numpy(self, accession: str) -> np.ndarray:
         """

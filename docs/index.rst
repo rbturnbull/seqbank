@@ -19,6 +19,7 @@ A wrapper for large DNA sequence datasets
    :caption: Contents:
 
    quickstart
+   storage
    api
    cli
    credits

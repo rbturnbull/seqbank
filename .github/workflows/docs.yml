@@ -28,19 +28,19 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.11"]
+        python-version: ["3.13"]
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v7
       - name: Install poetry
         run: pipx install poetry
       - name: Install dependencies for Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
           cache: 'poetry'
       - run: |
           poetry env use "${{ matrix.python-version }}"
-          poetry install
+          poetry install --all-extras
       - name: Docs
         run: |
           poetry run sphinx-build -b html docs gh-pages
@@ -67,5 +67,5 @@ jobs:
           path: 'gh-pages'
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v2
+        uses: actions/deploy-pages@v5
 

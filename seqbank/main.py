@@ -1,81 +1,72 @@
 import typer
+from typing import Annotated
 from pathlib import Path
 from rich.progress import track
 import plotly.io as pio
 
 from .refseq import get_refseq_urls
 from .seqbank import SeqBank
+from .storage import Engine
 from .dfam import download_dfam
 
-pio.kaleido.scope.mathjax = None
+pio.defaults.mathjax = None
 
 
 app = typer.Typer(pretty_exceptions_enable=False)
 
 
 @app.command()
-def add(path: Path, files: list[Path], format: str = "", filter: Path = None) -> None:
-    """Add sequences from a file or list of files to a SeqBank.
-
-    Args:
-        path (Path): The path to the SeqBank.
-        files (list[Path]): A list of file paths containing sequences.
-        format (str, optional): The format of the sequence files. Defaults to "".
-        filter (Path, optional): A filter file for sequences. Defaults to None.
-    """
+def add(
+    path: Annotated[Path, typer.Argument(help='SeqBank database directory; existing banks detect their engine automatically.')],
+    files: Annotated[list[Path], typer.Argument(help='Sequence files to import (FASTA, FASTQ, or another supported format).')],
+    format: Annotated[str, typer.Option(help='Input sequence format; infer from the filename when omitted.')] = '',
+    filter: Annotated[Path, typer.Option(help='File listing accessions to include; omit to import all sequences.')] = None,
+    engine: Annotated[Engine, typer.Option(help='Storage engine for a new bank (default: rocksdict); must match an existing bank.')] = None,
+) -> None:
+    """Add sequences from a file or list of files to a SeqBank."""
     print(f"Opening seqbank '{path}'")
-    seqbank = SeqBank(path=path, write=True)
+    seqbank = SeqBank(path=path, write=True, engine=engine)
     seqbank.add_files(files, format=format, filter=filter)
 
 
 @app.command()
 def add_sequence_from_file(
-    path: Path, 
-    accession:str, 
-    file: Path, 
-    format: str = "",
+    path: Annotated[Path, typer.Argument(help='SeqBank database directory; existing banks detect their engine automatically.')],
+    accession: Annotated[str, typer.Argument(help='Accession to assign to the imported sequence.')],
+    file: Annotated[Path, typer.Argument(help='Input file containing exactly one sequence.')],
+    format: Annotated[str, typer.Option(help='Input sequence format; infer from the filename when omitted.')] = '',
+    engine: Annotated[Engine, typer.Option(help='Storage engine for a new bank (default: rocksdict); must match an existing bank.')] = None,
 ) -> None:
-    """
-    Add a sequence from a file with a single sequence to a SeqBank.
-
-    Args:
-        path (Path): The path to the SeqBank.
-        files (list[Path]): A list of file paths containing sequences.
-        format (str, optional): The format of the sequence files. Defaults to "".
-        filter (Path, optional): A filter file for sequences. Defaults to None.
-    """
+    """Add a sequence from a file with a single sequence to a SeqBank."""
     print(f"Opening seqbank '{path}'")
-    seqbank = SeqBank(path=path, write=True)
+    seqbank = SeqBank(path=path, write=True, engine=engine)
     seqbank.add_sequence_from_file(accession, file, format=format)
     print(f"Added {accession} from {file.name}")
 
 
 @app.command()
-def url(path: Path, urls: list[str], format: str = "", max: int = 0, workers: int = -1, tmp_dir: Path = None) -> None:
-    """Add sequences from a list of URLs to a SeqBank.
-
-    Args:
-        path (Path): The path to the SeqBank.
-        urls (list[str]): A list of URLs containing sequences.
-        format (str, optional): The format of the sequence files. Defaults to "".
-        max (int, optional): Maximum number of sequences to add. Defaults to 0 (all).
-        workers (int, optional): Number of workers to use for downloading. Defaults to -1.
-        tmp_dir (Path, optional): Temporary directory for downloads. Defaults to None.
-    """
+def url(
+    path: Annotated[Path, typer.Argument(help='SeqBank database directory; existing banks detect their engine automatically.')],
+    urls: Annotated[list[str], typer.Argument(help='URLs of sequence files to download and import.')],
+    format: Annotated[str, typer.Option(help='Input sequence format; infer from the filename when omitted.')] = '',
+    max: Annotated[int, typer.Option(help='Maximum number of URLs to import; 0 imports all URLs.')] = 0,
+    workers: Annotated[int, typer.Option(help='Number of download/import threads; -1 uses all available CPU cores.')] = -1,
+    tmp_dir: Annotated[Path, typer.Option(help='Directory for temporary downloads; omit to use the system temporary directory.')] = None,
+    engine: Annotated[Engine, typer.Option(help='Storage engine for a new bank (default: rocksdict); must match an existing bank.')] = None,
+) -> None:
+    """Add sequences from a list of URLs to a SeqBank."""
     print(f"Opening seqbank '{path}'")
-    seqbank = SeqBank(path=path, write=True)
+    seqbank = SeqBank(path=path, write=True, engine=engine)
 
     seqbank.add_urls(urls, format=format, max=max, workers=workers, tmp_dir=tmp_dir)
 
 
 @app.command()
-def delete(path: Path, accessions: list[str]) -> None:
-    """Delete sequences from a SeqBank.
-
-    Args:
-        path (Path): The path to the SeqBank.
-        accessions (list[str]): A list of accessions to delete from the SeqBank.
-    """
+def delete(
+    path: Annotated[Path, typer.Argument(help='SeqBank database directory; existing banks detect their engine automatically.')],
+    accessions: Annotated[list[str], typer.Argument(help='Accessions to delete from the bank.')],
+) -> None:
+    """Delete sequences from a SeqBank."""
     print(f"Opening seqbank '{path}'")
     seqbank = SeqBank(path=path, write=True)
 
@@ -84,66 +75,55 @@ def delete(path: Path, accessions: list[str]) -> None:
 
 
 @app.command()
-def refseq(path: Path, max: int = 0, workers: int = -1, tmp_dir: Path = None) -> None:
-    """Download all RefSeq sequences to a SeqBank.
-
-    Args:
-        path (Path): The path to the SeqBank.
-        max (int, optional): Maximum number of sequences to add. Defaults to 0 (all).
-        workers (int, optional): Number of workers to use for downloading. Defaults to -1.
-        tmp_dir (Path, optional): Temporary directory for downloads. Defaults to None.
-    """
+def refseq(
+    path: Annotated[Path, typer.Argument(help='SeqBank database directory; existing banks detect their engine automatically.')],
+    max: Annotated[int, typer.Option(help='Maximum number of URLs to import; 0 imports all URLs.')] = 0,
+    workers: Annotated[int, typer.Option(help='Number of download/import threads; -1 uses all available CPU cores.')] = -1,
+    tmp_dir: Annotated[Path, typer.Option(help='Directory for temporary downloads; omit to use the system temporary directory.')] = None,
+    engine: Annotated[Engine, typer.Option(help='Storage engine for a new bank (default: rocksdict); must match an existing bank.')] = None,
+) -> None:
+    """Download all RefSeq sequences to a SeqBank."""
     print("Getting RefSeq files list")
-    return url(path, get_refseq_urls(tmp_dir=tmp_dir), max=max, workers=workers, tmp_dir=tmp_dir)
+    return url(path, get_refseq_urls(tmp_dir=tmp_dir), max=max, workers=workers, tmp_dir=tmp_dir, engine=engine)
 
 
 @app.command()
-def dfam(path: Path, release: str = "current", curated: bool = True) -> bool:
-    """Download DFam sequences to a SeqBank.
-
-    Args:
-        path (Path): The path to the SeqBank.
-        release (str, optional): The DFam release version to download. Defaults to "current".
-        curated (bool, optional): Whether to download curated sequences. Defaults to True.
-
-    Returns:
-        bool: True if the download and addition were successful, False otherwise.
-    """
+def dfam(
+    path: Annotated[Path, typer.Argument(help='SeqBank database directory; existing banks detect their engine automatically.')],
+    release: Annotated[str, typer.Option(help='DFam release to download, such as current.')] = 'current',
+    curated: Annotated[bool, typer.Option(help='Download only curated DFam families; disable to include all families.')] = True,
+    engine: Annotated[Engine, typer.Option(help='Storage engine for a new bank (default: rocksdict); must match an existing bank.')] = None,
+) -> bool:
+    """Download DFam sequences to a SeqBank."""
     print("Getting DFam")
-    seqbank = SeqBank(path=path, write=True)
+    seqbank = SeqBank(path=path, write=True, engine=engine)
     return download_dfam(seqbank, release=release, curated=curated)
 
 
 @app.command()
-def ls(path: Path) -> None:
-    """List accessions in a SeqBank.
-
-    Args:
-        path (Path): The path to the SeqBank.
-    """
+def ls(
+    path: Annotated[Path, typer.Argument(help='SeqBank database directory; existing banks detect their engine automatically.')],
+) -> None:
+    """List accessions in a SeqBank."""
     seqbank = SeqBank(path=path)
     seqbank.ls()
 
 
 @app.command()
-def count(path: Path) -> None:
-    """Display the number of accessions in a SeqBank.
-
-    Args:
-        path (Path): The path to the SeqBank.
-    """
+def count(
+    path: Annotated[Path, typer.Argument(help='SeqBank database directory; existing banks detect their engine automatically.')],
+) -> None:
+    """Display the number of accessions in a SeqBank."""
     seqbank = SeqBank(path=path)
     print(len(seqbank))
 
 
 @app.command()
-def cp(path: Path, new: Path) -> None:
-    """Copy each sequence from one SeqBank to another.
-
-    Args:
-        path (Path): The path to the source SeqBank.
-        new (Path): The path to the destination SeqBank.
-    """
+def cp(
+    path: Annotated[Path, typer.Argument(help='SeqBank database directory; existing banks detect their engine automatically.')],
+    new: Annotated[Path, typer.Argument(help='Destination bank; new banks use RocksDict, existing banks retain their engine.')],
+) -> None:
+    """Copy each sequence from one SeqBank to another."""
     print(f"Copying seqbank '{path}' to '{new}'")
     seqbank = SeqBank(path=path)
     new = SeqBank(path=new, write=True)
@@ -151,29 +131,27 @@ def cp(path: Path, new: Path) -> None:
 
 
 @app.command()
-def export(path: Path, output: Path, format: str = "fasta") -> None:
-    """Export a SeqBank to a specified format.
-
-    Args:
-        path (Path): The path to the SeqBank.
-        output (Path): The path to save the exported sequences.
-        format (str, optional): The format for the exported sequences. Defaults to "fasta".
-    """
+def export(
+    path: Annotated[Path, typer.Argument(help='SeqBank database directory; existing banks detect their engine automatically.')],
+    output: Annotated[Path, typer.Argument(help='Destination file for exported sequences.')],
+    format: Annotated[str, typer.Option(help='Output sequence format, such as fasta or fastq.')] = 'fasta',
+) -> None:
+    """Export a SeqBank to a specified format."""
     print(f"Exporting seqbank '{path}' to '{output}' in {format} format")
     seqbank = SeqBank(path=path)
     return seqbank.export(output, format=format)
 
 
 @app.command()
-def histogram(path: Path, output_path: Path = None, show: bool = False, nbins: int = 30, min:int=0, max:int=0) -> None:
-    """Generate a histogram of sequence lengths from a SeqBank.
-
-    Args:
-        path (Path): The path to the SeqBank.
-        output_path (Path, optional): The path to save the histogram. If None, the histogram will be displayed.
-        show (bool, optional): Whether to display the histogram. Defaults to False.
-        nbins (int, optional): The number of bins for the histogram. Defaults to 30.
-    """
+def histogram(
+    path: Annotated[Path, typer.Argument(help='SeqBank database directory; existing banks detect their engine automatically.')],
+    output_path: Annotated[Path, typer.Option(help='Save the histogram image here (requires Chrome); omit to display it.')] = None,
+    show: Annotated[bool, typer.Option(help='Display the histogram, including when an image is also saved.')] = False,
+    nbins: Annotated[int, typer.Option(help='Requested number of histogram bins.')] = 30,
+    min: Annotated[int, typer.Option(help='Minimum sequence length to include, in bases; 0 disables the lower bound.')] = 0,
+    max: Annotated[int, typer.Option(help='Maximum sequence length to include, in bases; 0 disables the upper bound.')] = 0,
+) -> None:
+    """Generate a histogram of sequence lengths from a SeqBank."""
     # Load the SeqBank
     seqbank = SeqBank(path=path)
 
@@ -189,3 +167,21 @@ def histogram(path: Path, output_path: Path = None, show: bool = False, nbins: i
 
     if show:
         fig.show()
+
+
+@app.command()
+def convert(
+    path: Annotated[Path, typer.Argument(help='SeqBank database directory; existing banks detect their engine automatically.')],
+    destination: Annotated[Path, typer.Argument(help='New destination database directory; must not already exist.')],
+    engine: Annotated[Engine, typer.Option(help='Storage engine for the destination; Speedict requires the speedict extra.')],
+) -> None:
+    """Convert all records into a new directory using the selected engine."""
+    if destination.exists():
+        raise typer.BadParameter("Destination must not exist")
+    source = SeqBank(path)
+    target = SeqBank(destination, write=True, engine=engine)
+    try:
+        source.copy(target)
+    finally:
+        source.close()
+        target.close()
