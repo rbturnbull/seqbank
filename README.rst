@@ -221,17 +221,6 @@ In projects where only sequences longer than a specific threshold are required, 
 .. end-quickstart
 
 
-Credits
-==================================
-
-.. start-credits
-
-* `Robert Turnbull <https://robturnbull.com>`_
-* Rafsan Al Mamun <rafsan7238@gmail.com>
-
-.. end-credits
-
-
 .. start-storage
 
 .. _storage-engines:
@@ -333,3 +322,14 @@ Chromium installed on the machine. If Chrome is not already installed, run::
 A browser is not needed to create figures or display the interactive histogram.
 
 .. end-image-export
+
+Credits
+==================================
+
+.. start-credits
+
+* `Robert Turnbull <https://robturnbull.com>`_
+* Rafsan Al Mamun <rafsan7238@gmail.com>
+
+.. end-credits
+

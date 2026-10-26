@@ -42,5 +42,5 @@ def format_fig(fig):
     fig.update_xaxes(gridcolor=gridcolor)
     fig.update_yaxes(gridcolor=gridcolor)
 
-    fig.update_xaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticks='outside')
-    fig.update_yaxes(showline=True, linewidth=1, linecolor='black', mirror=True, ticks='outside')
+    fig.update_xaxes(showline=True, linewidth=1, linecolor="black", mirror=True, ticks="outside")
+    fig.update_yaxes(showline=True, linewidth=1, linecolor="black", mirror=True, ticks="outside")

@@ -36,6 +36,7 @@ class SeqBank:
     File imports and copies use bounded batches. Individual :meth:`add` calls
     commit separately; prefer :meth:`add_file` for bulk LMDB imports.
     """
+
     path: Path
     write: bool = False
     engine: Engine | str | None = None
@@ -197,11 +198,11 @@ class SeqBank:
         self.file[key] = seq
 
     def add_file(
-        self, 
-        path: Path, 
-        format: str = "", 
-        progress=None, 
-        overall_task=None, 
+        self,
+        path: Path,
+        format: str = "",
+        progress=None,
+        overall_task=None,
         filter: Path | list | set | None = None,
     ) -> None:
         """Adds sequences from a file to the SeqBank.
@@ -269,9 +270,9 @@ class SeqBank:
         print("Added", path.name)
 
     def add_sequence_from_file(
-        self, 
-        accession: str, 
-        path: Path, 
+        self,
+        accession: str,
+        path: Path,
         format: str = "",
     ) -> None:
         """
@@ -308,7 +309,6 @@ class SeqBank:
             with open_path(path) as f:
                 for record in SeqIO.parse(f, format):
                     self.add(record, accession)
-
 
     def seen_url(self, url: str) -> bool:
         """Checks if a given URL has been seen (i.e., processed) before and present in the SeqBank.
@@ -613,7 +613,7 @@ class SeqBank:
 
         return accession_lengths
 
-    def histogram(self, nbins: int = 30, max:int=0, min:int=0) -> go.Figure:
+    def histogram(self, nbins: int = 30, max: int = 0, min: int = 0) -> go.Figure:
         """
         Creates a histogram of the lengths of all sequences and returns the Plotly figure object.
 

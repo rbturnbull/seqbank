@@ -1,4 +1,5 @@
 """Byte-key/byte-value storage adapters and persistent engine identification."""
+
 import importlib
 import json
 import hashlib
@@ -6,6 +7,7 @@ from enum import Enum
 from threading import RLock
 
 from .exceptions import SeqBankError
+
 
 class Engine(str, Enum):
     """Supported database engines (also accepted as strings in the Python API)."""
@@ -38,7 +40,8 @@ class RocksStorage:
         options.set_max_open_files(500)
         self.module = module
         self.db = module.Rdict(
-            str(path), options=options,
+            str(path),
+            options=options,
             access_type=module.AccessType.read_write() if write else module.AccessType.read_only(),
         )
 
