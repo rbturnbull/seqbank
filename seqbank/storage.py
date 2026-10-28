@@ -131,6 +131,22 @@ class LMDBStorage:
         self.db.close()
 
 
+INSTALL_HINTS = {
+    Engine.ROCKSDICT: "pip install 'seqbank[rocksdict]'",
+    Engine.SPEEDICT: "pip install 'seqbank[speedict]' (Speedict wheels require Python <3.13)",
+    Engine.LMDB: "pip install seqbank",
+}
+
+
+def default_engine():
+    """Engine for new banks: RocksDict if it can be imported, otherwise LMDB."""
+    try:
+        importlib.import_module(Engine.ROCKSDICT.value)
+    except ImportError:
+        return Engine.LMDB
+    return Engine.ROCKSDICT
+
+
 def open_storage(path, write, requested=None):
     """Identify existing banks; never try a different engine on an existing bank."""
     if requested is not None and requested not in ENGINES:
@@ -153,17 +169,13 @@ def open_storage(path, write, requested=None):
         # All banks created before engine metadata were Speedict banks.
         engine = Engine.SPEEDICT
     else:
-        engine = requested or Engine.ROCKSDICT
+        engine = requested or default_engine()
     if requested is not None and requested != engine:
         raise SeqBankError(f"Bank uses {engine}, not {requested}; convert it to a new directory instead")
     try:
         module = importlib.import_module(engine.value)
     except ImportError as err:
-        hint = " Speedict wheels require Python <3.13." if engine == "speedict" else ""
-        install = "seqbank[speedict]" if engine == Engine.SPEEDICT else "seqbank"
-        raise SeqBankError(
-            f"Engine {engine.value!r} is unavailable. Install with: pip install '{install}'.{hint}"
-        ) from err
+        raise SeqBankError(f"Engine {engine.value!r} is unavailable. Install with: {INSTALL_HINTS[engine]}.") from err
     if write:
         path.mkdir(parents=True, exist_ok=True)
     storage = LMDBStorage(module, path, write) if engine == "lmdb" else RocksStorage(module, path, write)

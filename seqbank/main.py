@@ -28,7 +28,10 @@ def add(
         Path, typer.Option(help="File listing accessions to include; omit to import all sequences.")
     ] = None,
     engine: Annotated[
-        Engine, typer.Option(help="Storage engine for a new bank (default: rocksdict); must match an existing bank.")
+        Engine,
+        typer.Option(
+            help="Storage engine for a new bank (default: rocksdict if installed, otherwise lmdb); must match an existing bank."
+        ),
     ] = None,
 ) -> None:
     """Add sequences from a file or list of files to a SeqBank."""
@@ -46,7 +49,10 @@ def add_sequence_from_file(
     file: Annotated[Path, typer.Argument(help="Input file containing exactly one sequence.")],
     format: Annotated[str, typer.Option(help="Input sequence format; infer from the filename when omitted.")] = "",
     engine: Annotated[
-        Engine, typer.Option(help="Storage engine for a new bank (default: rocksdict); must match an existing bank.")
+        Engine,
+        typer.Option(
+            help="Storage engine for a new bank (default: rocksdict if installed, otherwise lmdb); must match an existing bank."
+        ),
     ] = None,
 ) -> None:
     """Add a sequence from a file with a single sequence to a SeqBank."""
@@ -71,7 +77,10 @@ def url(
         Path, typer.Option(help="Directory for temporary downloads; omit to use the system temporary directory.")
     ] = None,
     engine: Annotated[
-        Engine, typer.Option(help="Storage engine for a new bank (default: rocksdict); must match an existing bank.")
+        Engine,
+        typer.Option(
+            help="Storage engine for a new bank (default: rocksdict if installed, otherwise lmdb); must match an existing bank."
+        ),
     ] = None,
 ) -> None:
     """Add sequences from a list of URLs to a SeqBank."""
@@ -109,7 +118,10 @@ def refseq(
         Path, typer.Option(help="Directory for temporary downloads; omit to use the system temporary directory.")
     ] = None,
     engine: Annotated[
-        Engine, typer.Option(help="Storage engine for a new bank (default: rocksdict); must match an existing bank.")
+        Engine,
+        typer.Option(
+            help="Storage engine for a new bank (default: rocksdict if installed, otherwise lmdb); must match an existing bank."
+        ),
     ] = None,
 ) -> None:
     """Download all RefSeq sequences to a SeqBank."""
@@ -127,7 +139,10 @@ def dfam(
         bool, typer.Option(help="Download only curated DFam families; disable to include all families.")
     ] = True,
     engine: Annotated[
-        Engine, typer.Option(help="Storage engine for a new bank (default: rocksdict); must match an existing bank.")
+        Engine,
+        typer.Option(
+            help="Storage engine for a new bank (default: rocksdict if installed, otherwise lmdb); must match an existing bank."
+        ),
     ] = None,
 ) -> bool:
     """Download DFam sequences to a SeqBank."""
@@ -164,7 +179,10 @@ def cp(
         Path, typer.Argument(help="SeqBank database directory; existing banks detect their engine automatically.")
     ],
     new: Annotated[
-        Path, typer.Argument(help="Destination bank; new banks use RocksDict, existing banks retain their engine.")
+        Path,
+        typer.Argument(
+            help="Destination bank; new banks use RocksDict if installed (otherwise LMDB), existing banks retain their engine."
+        ),
     ],
 ) -> None:
     """Copy each sequence from one SeqBank to another."""
@@ -230,7 +248,10 @@ def convert(
     ],
     destination: Annotated[Path, typer.Argument(help="New destination database directory; must not already exist.")],
     engine: Annotated[
-        Engine, typer.Option(help="Storage engine for the destination; Speedict requires the speedict extra.")
+        Engine,
+        typer.Option(
+            help="Storage engine for the destination; RocksDict and Speedict require the rocksdict and speedict extras."
+        ),
     ],
 ) -> None:
     """Convert all records into a new directory using the selected engine."""

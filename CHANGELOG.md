@@ -1,5 +1,14 @@
 # Release notes
 
+## 0.3.0
+
+- RocksDict is now an optional extra: `pip install 'seqbank[rocksdict]'`. A default
+  `pip install seqbank` includes LMDB only. The `all` extra installs RocksDict and Speedict.
+- New banks use RocksDict if it is installed and fall back to LMDB otherwise, so existing
+  environments keep their behaviour. Existing banks always open with the engine recorded
+  in `seqbank.json`; if it is not installed the error explains which extra to install.
+  Use `seqbank convert` to move a bank to LMDB for use in environments without RocksDict.
+
 ## 0.2.0
 
 - Add RocksDict and LMDB engines, installed by default with `pip install seqbank`.
@@ -20,6 +29,6 @@
   from legacy banks. Existing short URL keys remain unchanged.
 - Support Python 3.10–3.14, with CLI engine validation and parameter help.
 - Update Plotly/Kaleido compatibility. Static image export now requires Chrome
-  or Chromium; install a browser with `poetry run plotly_get_chrome -y` if needed.
+  or Chromium; install a browser with `uv run plotly_get_chrome -y` if needed.
 - Include reproducible engine benchmarks. Results are warm-cache measurements
   with current engine defaults, which provide different durability guarantees.

@@ -29,9 +29,10 @@ class SeqBank:
         path: Directory containing the bank and its engine metadata.
         write: Allow creating or modifying the bank. Defaults to read-only.
         engine: ``rocksdict``, ``lmdb``, or ``speedict``. When omitted, existing
-            banks are detected automatically and new banks use RocksDict.
-            Banks without metadata are treated as legacy Speedict banks.
-            RocksDict and LMDB are included; Speedict requires ``seqbank[speedict]``.
+            banks are detected automatically and new banks use RocksDict if it is
+            installed, otherwise LMDB. Banks without metadata are treated as legacy
+            Speedict banks. LMDB is always available; RocksDict requires
+            ``seqbank[rocksdict]`` and Speedict requires ``seqbank[speedict]``.
 
     File imports and copies use bounded batches. Individual :meth:`add` calls
     commit separately; prefer :meth:`add_file` for bulk LMDB imports.

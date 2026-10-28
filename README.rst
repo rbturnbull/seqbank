@@ -44,8 +44,8 @@ To install seqbank from PyPI, you can use this command:
 
     pip install seqbank
 
-RocksDict and LMDB are installed by default. Legacy Speedict banks additionally
-require ``pip install 'seqbank[speedict]'`` on Python 3.10–3.12.
+LMDB is always installed. RocksDict (``pip install 'seqbank[rocksdict]'``) and legacy
+Speedict banks (``pip install 'seqbank[speedict]'``, Python 3.10–3.12) are optional extras.
 See the Storage engines section for selection and conversion.
 
 Or install directly from the GitHub repository:
@@ -186,7 +186,7 @@ SeqBank allows you to copy sequences from one SeqBank database to another, facil
 **Example:**
 
 To copy sequences from a source SeqBank to a destination SeqBank (a new
-destination uses RocksDict by default):
+destination uses RocksDict if installed, otherwise LMDB):
 
 .. code-block:: bash
 
@@ -228,14 +228,22 @@ In projects where only sequences longer than a specific threshold are required, 
 Storage engines
 ===============
 
-SeqBank supports RocksDict (the default for new banks), LMDB, and Speedict.
-RocksDict and LMDB are included in a normal installation::
+SeqBank supports LMDB, RocksDict, and Speedict. LMDB is always available in a
+normal installation::
 
     pip install seqbank
 
-Speedict remains optional for legacy banks (Python 3.10–3.12)::
+RocksDict and Speedict are optional extras::
 
-    pip install 'seqbank[speedict]'
+    pip install 'seqbank[rocksdict]'
+    pip install 'seqbank[speedict]'  # legacy banks, Python 3.10–3.12
+    pip install 'seqbank[all]'
+
+A new bank uses RocksDict if it is installed and LMDB otherwise. Pass ``--engine``
+(or ``engine=`` in Python) to choose explicitly. Because the default depends on the
+environment, a bank created where RocksDict is installed cannot be opened where it
+is missing; SeqBank reports how to install it, and ``seqbank convert`` can move
+the bank to LMDB, which is available everywhere.
 
 For example, create an LMDB bank from FASTA and then reopen it without an
 engine option::
@@ -260,8 +268,8 @@ The Python API accepts ``Engine.ROCKSDICT``, ``Engine.LMDB``, and
 and lists them in ``--help``.
 
 Creation commands (``add``, ``add-sequence-from-file``, ``url``, ``refseq``,
-and ``dfam``) accept ``--engine``. RocksDict is the default for new banks;
-there is no silent fallback to another backend.
+and ``dfam``) accept ``--engine``. New banks use RocksDict if it is installed,
+otherwise LMDB. An existing bank is never opened with a different engine.
 
 Banks are directories. New banks contain ``seqbank.json`` with their engine
 and format version. Existing banks without this file are treated as legacy
@@ -317,7 +325,7 @@ Static image export
 Histogram image export uses Plotly and Kaleido 1.x and requires Chrome or
 Chromium installed on the machine. If Chrome is not already installed, run::
 
-    poetry run plotly_get_chrome -y
+    uv run plotly_get_chrome -y
 
 A browser is not needed to create figures or display the interactive histogram.
 

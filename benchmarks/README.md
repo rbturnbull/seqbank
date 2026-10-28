@@ -1,8 +1,8 @@
 Run the benchmark in Python 3.10–3.12 with all three engines installed:
 
 ```sh
-poetry install --all-extras
-poetry run python benchmarks/storage.py --output benchmarks/results.json
+uv sync --all-extras
+uv run python benchmarks/storage.py --output benchmarks/results.json
 ```
 
 The script generates deterministic synthetic DNA in three sizes, runs three

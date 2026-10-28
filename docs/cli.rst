@@ -9,11 +9,11 @@ Engine selection
 
 ``add``, ``add-sequence-from-file``, ``url``, ``refseq``, and ``dfam`` accept
 ``--engine rocksdict``, ``--engine lmdb``, or ``--engine speedict`` when creating
-a bank. If omitted, a new bank uses RocksDict. Existing banks are detected
+a bank. If omitted, a new bank uses RocksDict if it is installed, otherwise LMDB. Existing banks are detected
 automatically; an explicit engine must match their recorded engine.
 
-RocksDict and LMDB are installed by default. Speedict requires the
-``seqbank[speedict]`` extra on Python 3.10–3.12; see :ref:`storage-engines`.
+LMDB is always installed. RocksDict requires the ``seqbank[rocksdict]`` extra and
+Speedict the ``seqbank[speedict]`` extra (Python 3.10–3.12); see :ref:`storage-engines`.
 
 .. code-block:: bash
 
@@ -35,7 +35,7 @@ If conversion fails, remove the incomplete destination before retrying.
     seqbank convert old.sb new.sb --engine lmdb
 
 ``cp SOURCE DESTINATION`` copies into an existing bank using its recorded engine,
-or creates a new RocksDict bank. Use ``convert`` to choose a destination engine.
+or creates a new bank (RocksDict if installed, otherwise LMDB). Use ``convert`` to choose a destination engine.
 Neither command performs a byte-for-byte filesystem backup.
 
 Commands
