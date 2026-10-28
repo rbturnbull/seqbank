@@ -174,7 +174,7 @@ def count(
 
 
 @app.command()
-def cp(
+def merge(
     path: Annotated[
         Path, typer.Argument(help="SeqBank database directory; existing banks detect their engine automatically.")
     ],
@@ -185,8 +185,8 @@ def cp(
         ),
     ],
 ) -> None:
-    """Copy each sequence from one SeqBank to another."""
-    print(f"Copying seqbank '{path}' to '{new}'")
+    """Merge every sequence from one SeqBank into another."""
+    print(f"Merging seqbank '{path}' into '{new}'")
     seqbank = SeqBank(path=path)
     new = SeqBank(path=new, write=True)
     seqbank.copy(new)

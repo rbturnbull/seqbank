@@ -1,5 +1,9 @@
 # Release notes
 
+## Unreleased
+
+- Rename the `seqbank cp` command to `seqbank merge`, which merges all records from one bank into another.
+
 ## 0.3.0
 
 - RocksDict is now an optional extra: `pip install 'seqbank[rocksdict]'`. A default

@@ -46,13 +46,13 @@ def test_ls():
     assert result.stdout == "NC_010663.1\nNC_024664.1\nNC_036112.1\nNC_036113.1\nNC_044840.1\nNZ_JAJNFP010000161.1\n"
 
 
-def test_cp():
+def test_merge():
     with tempfile.TemporaryDirectory() as tmpdirname:
         tmpdirname = Path(tmpdirname)
 
         new_path = tmpdirname / "new.sb"
         assert new_path.exists() == False
-        result = runner.invoke(app, ["cp", str(TEST_BANK_PATH), str(new_path)])
+        result = runner.invoke(app, ["merge", str(TEST_BANK_PATH), str(new_path)])
         assert result.exit_code == 0
         assert new_path.exists()
 

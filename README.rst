@@ -185,15 +185,15 @@ SeqBank allows you to copy sequences from one SeqBank database to another, facil
 
 **Example:**
 
-To copy sequences from a source SeqBank to a destination SeqBank (a new
+To merge sequences from a source SeqBank into a destination SeqBank (a new
 destination uses RocksDict if installed, otherwise LMDB):
 
 .. code-block:: bash
 
-    seqbank cp /path/to/source_seqbank /path/to/destination_seqbank
+    seqbank merge /path/to/source_seqbank /path/to/destination_seqbank
 
 **Use case:**  
-For maintaining backups of your sequence database or migrating data to a new location, the `cp` command provides a straightforward method to duplicate your SeqBank data.
+For maintaining backups of your sequence database or migrating data to a new location, the ``merge`` command provides a straightforward method to duplicate your SeqBank data.
 
 
 Filtering Sequences and Custom Workflows

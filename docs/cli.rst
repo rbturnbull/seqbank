@@ -34,7 +34,7 @@ If conversion fails, remove the incomplete destination before retrying.
 
     seqbank convert old.sb new.sb --engine lmdb
 
-``cp SOURCE DESTINATION`` copies into an existing bank using its recorded engine,
+``merge SOURCE DESTINATION`` merges all records into an existing bank using its recorded engine,
 or creates a new bank (RocksDict if installed, otherwise LMDB). Use ``convert`` to choose a destination engine.
 Neither command performs a byte-for-byte filesystem backup.
 
@@ -63,8 +63,8 @@ Commands
      - Count stored records, including internal tracking records.
    * - ``delete PATH ACCESSIONS...``
      - Delete the specified accessions.
-   * - ``cp SOURCE DESTINATION``
-     - Copy records between banks.
+   * - ``merge SOURCE DESTINATION``
+     - Merge records from one bank into another.
    * - ``convert SOURCE DESTINATION --engine ENGINE``
      - Convert to a new bank using a selected engine.
    * - ``export PATH OUTPUT``
