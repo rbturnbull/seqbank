@@ -1,6 +1,6 @@
 # Release notes
 
-## Unreleased
+## 0.4.0
 
 - Rename the `seqbank cp` command to `seqbank merge`, which merges all records from one bank into another.
 
