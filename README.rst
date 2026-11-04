@@ -4,10 +4,13 @@ Seqbank
 
 .. start-badges
 
-|pypi badge| |testing badge| |coverage badge| |docs badge| |black badge| |git3moji badge|
+|pypi badge| |bioconda badge| |testing badge| |coverage badge| |docs badge| |black badge| |git3moji badge|
 
 .. |pypi badge| image:: https://img.shields.io/pypi/v/seqbank?color=blue
     :target: https://pypi.org/project/seqbank/
+
+.. |bioconda badge| image:: https://img.shields.io/conda/vn/bioconda/seqbank?color=green
+    :target: https://bioconda.github.io/recipes/seqbank/README.html
 
 .. |testing badge| image:: https://github.com/rbturnbull/seqbank/actions/workflows/testing.yml/badge.svg
     :target: https://github.com/rbturnbull/seqbank/actions
@@ -54,9 +57,14 @@ Or install directly from the GitHub repository:
 
     pip install git+https://github.com/rbturnbull/seqbank.git
 
-.. note ::
+To install seqbank from `Bioconda <https://bioconda.github.io/recipes/seqbank/README.html>`_:
 
-    Soon seqbank will be able to be installed using conda.
+.. code-block:: bash
+
+    conda install -c conda-forge -c bioconda seqbank
+
+The Bioconda package includes the LMDB engine only. To use RocksDict or Speedict banks in a conda
+environment, install the extras with pip: ``pip install 'seqbank[rocksdict]'``.
 
 Usage
 ===========
