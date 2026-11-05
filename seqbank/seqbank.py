@@ -9,11 +9,12 @@ from Bio import SeqIO
 from attrs import define
 from rich.progress import track
 import pyfastx
-from rich.progress import Progress, TimeElapsedColumn, MofNCompleteColumn
+from rich.progress import Progress, TaskID, TimeElapsedColumn, MofNCompleteColumn
 from datetime import datetime
-from .storage import Engine, open_storage
+from .storage import Engine, Storage, open_storage
 from threading import RLock
 import atexit
+from typing import Iterator, Sequence
 
 from .transform import seq_to_bytes, bytes_to_str
 from .io import get_file_format, open_path, download_file, seq_count, TemporaryDirectory
@@ -55,7 +56,7 @@ class SeqBank:
         if not self.write and not self.path.exists():
             raise FileNotFoundError(f"Cannot find SeqBank file at path: {self.path}")
 
-    def key(self, accession: str) -> str:
+    def key(self, accession: str) -> bytes:
         """Generates a key for a given accession.
 
         Args:
@@ -66,7 +67,7 @@ class SeqBank:
         """
         return bytes(accession, "ascii")
 
-    def key_url(self, url: str) -> str:
+    def key_url(self, url: str) -> bytes:
         """Generates a key for a given URL.
 
         Args:
@@ -88,10 +89,10 @@ class SeqBank:
             pass
 
     @property
-    def file(self):
+    def file(self) -> Storage:
         """Open the selected storage engine lazily, safely across import threads."""
         if "_db" in self.__dict__:
-            return self._db
+            return self.__dict__["_db"]
         with self._open_lock:
             if "_db" not in self.__dict__:
                 self._db, self.engine = open_storage(self.path, self.write, self.engine)
@@ -99,7 +100,7 @@ class SeqBank:
             return self._db
 
     @file.setter
-    def file(self, storage):
+    def file(self, storage: Storage) -> None:
         self._db = storage
 
     def __len__(self) -> int:
@@ -115,14 +116,14 @@ class SeqBank:
             count += 1
         return count
 
-    def __getitem__(self, accession: str) -> np.ndarray:
+    def __getitem__(self, accession: str) -> bytes:
         """Retrieves the sequence data associated with a given accession.
 
         Args:
             accession (str): The accession key to look up in the SeqBank.
 
         Returns:
-            np.ndarray: The sequence data stored in the SeqBank for the given accession.
+            bytes: The encoded sequence data stored in the SeqBank for the given accession.
 
         Raises:
             SeqBankError: If the accession cannot be read or an error occurs during retrieval.
@@ -134,7 +135,7 @@ class SeqBank:
         except Exception as err:
             raise SeqBankError(f"Failed to read {accession} in SeqBank {self.path}:\n{err}")
 
-    def items(self):
+    def items(self) -> Iterator[tuple[bytes, np.ndarray]]:
         """Yields all key-value pairs from the SeqBank.
 
         The key is the accession, and the value is the sequence data in NumPy array format.
@@ -190,20 +191,19 @@ class SeqBank:
         key = self.key(accession)
 
         if isinstance(seq, SeqRecord):
-            seq = seq.seq
+            seq = str(seq.seq)
         if isinstance(seq, Seq):
             seq = str(seq)
-        if isinstance(seq, str):
-            seq = seq_to_bytes(seq)
+        value = seq_to_bytes(seq) if isinstance(seq, str) else bytes(seq)
 
-        self.file[key] = seq
+        self.file[key] = value
 
     def add_file(
         self,
         path: Path,
         format: str = "",
-        progress=None,
-        overall_task=None,
+        progress: Progress | None = None,
+        overall_task: TaskID | None = None,
         filter: Path | list | set | None = None,
     ) -> None:
         """Adds sequences from a file to the SeqBank.
@@ -223,11 +223,9 @@ class SeqBank:
         """
         batch, batch_size = [], 0
 
-        def add_record(seq, accession):
+        def add_record(seq: str | Seq | SeqRecord, accession: str) -> None:
             nonlocal batch, batch_size
-            if isinstance(seq, SeqRecord):
-                seq = seq.seq
-            value = seq_to_bytes(str(seq))
+            value = seq_to_bytes(str(seq.seq if isinstance(seq, SeqRecord) else seq))
             key = self.key(accession)
             batch.append((key, value))
             batch_size += len(key) + len(value)
@@ -337,10 +335,10 @@ class SeqBank:
     def add_url(
         self,
         url: str,
-        progress=None,
+        progress: Progress | None = None,
         format: str = "",
         force: bool = False,
-        overall_task=None,
+        overall_task: TaskID | None = None,
         tmp_dir: str | Path | None = None,
     ) -> bool:
         """Downloads and adds sequences from a URL to the SeqBank.
@@ -472,7 +470,7 @@ class SeqBank:
 
     def add_files(
         self,
-        files: list[str],
+        files: Sequence[Path | str],
         format: str = "",
         workers: int = 1,
         filter: Path | list[str] | set[str] | None = None,
@@ -585,15 +583,15 @@ class SeqBank:
         Returns:
             None
         """
-        accessions = accessions or self.get_accessions()
+        selected = accessions or self.get_accessions()
 
         # Read list of accessions if given file
-        if isinstance(accessions, (str, Path)):
-            accessions = Path(accessions).read_text().strip().split("\n")
+        if isinstance(selected, (str, Path)):
+            selected = Path(selected).read_text().strip().split("\n")
 
         format = format or get_file_format(output)
         with open(output, "w") as f:
-            for accession in accessions:
+            for accession in selected:
                 SeqIO.write(self.record(accession), f, format)
 
     def lengths_dict(self) -> dict[str, int]:

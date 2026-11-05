@@ -34,7 +34,7 @@ def add_dfam(seqbank: SeqBank, local_path: Path) -> None:
     """
     file = h5py.File(local_path, "r")
 
-    def visitor_func(name, node):
+    def visitor_func(name: str, node: h5py.HLObject) -> None:
         if isinstance(node, h5py.Dataset):
             accession = node.attrs["accession"]
             seq = node.attrs["consensus"]

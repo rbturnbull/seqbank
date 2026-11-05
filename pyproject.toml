@@ -43,6 +43,7 @@ dev = [
     "pre-commit>=2.15.0",
     "sphinx-copybutton>=0.4.0",
     "black>=21.10b0",
+    "mypy>=1.10",
     "sphinx-click",
 ]
 
@@ -52,6 +53,13 @@ sphinx-click = { git = "https://github.com/rbturnbull/sphinx-click.git" }
 [tool.black]
 line-length = 120
 target-version = ['py310']
+
+[tool.mypy]
+files = ["seqbank"]
+
+[[tool.mypy.overrides]]
+module = ["plotly.*", "h5py.*", "joblib.*", "pyfastx.*"]
+ignore_missing_imports = true
 
 [build-system]
 requires = ["hatchling"]

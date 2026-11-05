@@ -25,10 +25,10 @@ def add(
     ],
     format: Annotated[str, typer.Option(help="Input sequence format; infer from the filename when omitted.")] = "",
     filter: Annotated[
-        Path, typer.Option(help="File listing accessions to include; omit to import all sequences.")
+        Path | None, typer.Option(help="File listing accessions to include; omit to import all sequences.")
     ] = None,
     engine: Annotated[
-        Engine,
+        Engine | None,
         typer.Option(
             help="Storage engine for a new bank (default: rocksdict if installed, otherwise lmdb); must match an existing bank."
         ),
@@ -49,7 +49,7 @@ def add_sequence_from_file(
     file: Annotated[Path, typer.Argument(help="Input file containing exactly one sequence.")],
     format: Annotated[str, typer.Option(help="Input sequence format; infer from the filename when omitted.")] = "",
     engine: Annotated[
-        Engine,
+        Engine | None,
         typer.Option(
             help="Storage engine for a new bank (default: rocksdict if installed, otherwise lmdb); must match an existing bank."
         ),
@@ -74,10 +74,10 @@ def url(
         int, typer.Option(help="Number of download/import threads; -1 uses all available CPU cores.")
     ] = -1,
     tmp_dir: Annotated[
-        Path, typer.Option(help="Directory for temporary downloads; omit to use the system temporary directory.")
+        Path | None, typer.Option(help="Directory for temporary downloads; omit to use the system temporary directory.")
     ] = None,
     engine: Annotated[
-        Engine,
+        Engine | None,
         typer.Option(
             help="Storage engine for a new bank (default: rocksdict if installed, otherwise lmdb); must match an existing bank."
         ),
@@ -115,10 +115,10 @@ def refseq(
         int, typer.Option(help="Number of download/import threads; -1 uses all available CPU cores.")
     ] = -1,
     tmp_dir: Annotated[
-        Path, typer.Option(help="Directory for temporary downloads; omit to use the system temporary directory.")
+        Path | None, typer.Option(help="Directory for temporary downloads; omit to use the system temporary directory.")
     ] = None,
     engine: Annotated[
-        Engine,
+        Engine | None,
         typer.Option(
             help="Storage engine for a new bank (default: rocksdict if installed, otherwise lmdb); must match an existing bank."
         ),
@@ -139,7 +139,7 @@ def dfam(
         bool, typer.Option(help="Download only curated DFam families; disable to include all families.")
     ] = True,
     engine: Annotated[
-        Engine,
+        Engine | None,
         typer.Option(
             help="Storage engine for a new bank (default: rocksdict if installed, otherwise lmdb); must match an existing bank."
         ),
@@ -188,8 +188,8 @@ def merge(
     """Merge every sequence from one SeqBank into another."""
     print(f"Merging seqbank '{path}' into '{new}'")
     seqbank = SeqBank(path=path)
-    new = SeqBank(path=new, write=True)
-    seqbank.copy(new)
+    destination = SeqBank(path=new, write=True)
+    seqbank.copy(destination)
 
 
 @app.command()
@@ -212,7 +212,7 @@ def histogram(
         Path, typer.Argument(help="SeqBank database directory; existing banks detect their engine automatically.")
     ],
     output_path: Annotated[
-        Path, typer.Option(help="Save the histogram image here (requires Chrome); omit to display it.")
+        Path | None, typer.Option(help="Save the histogram image here (requires Chrome); omit to display it.")
     ] = None,
     show: Annotated[bool, typer.Option(help="Display the histogram, including when an image is also saved.")] = False,
     nbins: Annotated[int, typer.Option(help="Requested number of histogram bins.")] = 30,

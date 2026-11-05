@@ -1,6 +1,8 @@
 from typing import Optional
 from pathlib import Path
 
+import plotly.graph_objs as go
+
 
 def parse_filter(filter: Path | list[str] | set[str] | None = None) -> Optional[set[str]]:
     """Converts the input into a set of strings to use as a filter.
@@ -25,7 +27,7 @@ def parse_filter(filter: Path | list[str] | set[str] | None = None) -> Optional[
     return set(filter)
 
 
-def format_fig(fig):
+def format_fig(fig: go.Figure) -> None:
     """Formats a plotly figure in a nicer way."""
     fig.update_layout(
         width=1200,

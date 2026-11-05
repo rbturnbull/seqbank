@@ -4,9 +4,10 @@ import bz2
 from Bio import SeqIO
 import requests
 import tempfile
+from typing import Any, TextIO
 
 
-def open_path(path: Path | str):
+def open_path(path: Path | str) -> TextIO:
     """
     Opens a file, optionally decompressing it based on its extension.
 
@@ -125,8 +126,8 @@ class TemporaryDirectory(tempfile.TemporaryDirectory):
         prefix (str | Path | None): Optional prefix for the temporary directory.
     """
 
-    def __init__(self, prefix: str | Path | None = None, *args, **kwargs):
-        self._created_dirs = []  # Track directories that were created
+    def __init__(self, prefix: str | Path | None = None, *args: Any, **kwargs: Any) -> None:
+        self._created_dirs: list[Path] = []  # Track directories that were created
         if isinstance(prefix, Path):
             # Resolve path to string and ensure parent directories are created
             prefix.mkdir(parents=True, exist_ok=True)
@@ -137,9 +138,9 @@ class TemporaryDirectory(tempfile.TemporaryDirectory):
             if not prefix.endswith("/"):
                 prefix += "/"
 
-        super().__init__(prefix=prefix, *args, **kwargs)
+        super().__init__(prefix=prefix, *args, **kwargs)  # type: ignore[call-overload]
 
-    def cleanup(self):
+    def cleanup(self) -> None:
         """
         Cleans up the temporary directory and removes any created parent directories if they are empty.
         """
