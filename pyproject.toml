@@ -1,6 +1,6 @@
 [project]
 name = "seqbank"
-version = "0.4.0"
+version = "0.4.1"
 description = "A database to quickly read and write DNA sequence data in numerical form."
 authors = [{ name = "Robert Turnbull", email = "robert.turnbull@unimelb.edu.au" }]
 license = "Apache-2.0"
