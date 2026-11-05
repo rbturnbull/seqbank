@@ -37,7 +37,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
           enable-cache: true
       - name: Install dependencies for Python ${{ matrix.python-version }}
-        run: uv sync --all-extras
+        run: uv sync --locked --all-extras
       - name: Docs
         run: |
           uv run --no-sync sphinx-build -b html docs gh-pages

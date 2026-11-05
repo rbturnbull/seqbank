@@ -17,7 +17,7 @@ jobs:
         enable-cache: true
     - name: Install dependencies for Python ${{ matrix.python-version }}
       run: |
-        uv sync --all-extras
+        uv sync --locked --all-extras
     - name: Testing
       run: |
         uv run --no-sync python --version
@@ -38,7 +38,7 @@ jobs:
         enable-cache: true
     - name: Install dependencies without optional engines
       run: |
-        uv sync
+        uv sync --locked
     - name: Check rocksdict is absent
       run: |
         ! uv run --no-sync python -c "import rocksdict"
@@ -55,6 +55,6 @@ jobs:
         python-version: "3.12"
         enable-cache: true
     - name: Install dependencies
-      run: uv sync --all-extras
+      run: uv sync --locked --all-extras
     - name: Type checking
       run: uv run --no-sync mypy
