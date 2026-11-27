@@ -5,12 +5,11 @@ description = "A database to quickly read and write DNA sequence data in numeric
 authors = [{ name = "Robert Turnbull", email = "robert.turnbull@unimelb.edu.au" }]
 license = "Apache-2.0"
 readme = "README.rst"
-requires-python = ">=3.10,<3.15"
+requires-python = ">=3.10,<3.16"
 dependencies = [
     "typer>=0.9.0",
     "numpy>=1.22.0",
     "pyfastx>=1.1.0",
-    "h5py>=3.9.0",
     "biopython>=1.81",
     "attrs>=23.1.0",
     "rich>=10.16.1",
@@ -25,7 +24,8 @@ dependencies = [
 [project.optional-dependencies]
 rocksdict = ["rocksdict>=0.3.29,<0.4"]
 speedict = ["speedict>=0.3.11; python_version < '3.13'"]
-all = ["rocksdict>=0.3.29,<0.4", "speedict>=0.3.11; python_version < '3.13'"]
+dfam = ["h5py>=3.9.0"]
+all = ["rocksdict>=0.3.29,<0.4", "speedict>=0.3.11; python_version < '3.13'", "h5py>=3.9.0"]
 
 [project.scripts]
 seqbank = "seqbank.main:app"

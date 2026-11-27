@@ -1,5 +1,13 @@
 # Release notes
 
+## Unreleased
+
+- `h5py` is now an optional extra, needed only for `seqbank dfam`: `pip install 'seqbank[dfam]'`.
+  It is also included in the `all` extra. Without it, `seqbank dfam` raises an error explaining what to
+  install before downloading anything. Everything else in SeqBank no longer installs h5py.
+- Support Python 3.15 for the default (LMDB) install. The `rocksdict` and `dfam` extras need wheels that
+  are not yet available for Python 3.15.
+
 ## 0.4.0
 
 - Rename the `seqbank cp` command to `seqbank merge`, which merges all records from one bank into another.

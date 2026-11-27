@@ -3,10 +3,13 @@ import pytest
 from unittest.mock import patch, MagicMock
 from pathlib import Path
 import gzip
-import h5py
+import importlib
+import sys
 import tempfile
 import shutil
 
+import seqbank.dfam
+from seqbank.exceptions import SeqBankError
 from seqbank.seqbank import SeqBank
 from seqbank.dfam import download_dfam, add_dfam, dfam_url
 from seqbank.io import download_file
@@ -49,7 +52,7 @@ def mock_url():
 
 @patch('seqbank.dfam.download_file')
 @patch('seqbank.dfam.gzip.open')
-@patch('seqbank.dfam.h5py.File')
+@patch('seqbank.dfam.import_h5py')
 @patch('seqbank.dfam.Path')
 def test_download_dfam_already_downloaded(mock_path, mock_h5py, mock_gzip, mock_download_file, mock_seqbank):
     # Setup mocks
@@ -64,13 +67,13 @@ def test_download_dfam_already_downloaded(mock_path, mock_h5py, mock_gzip, mock_
     assert result is False
     mock_download_file.assert_not_called()
     mock_gzip.assert_not_called()
-    mock_h5py.assert_not_called()
+    mock_h5py.return_value.File.assert_not_called()
     mock_seqbank.add.assert_not_called()
     mock_seqbank.save_seen_url.assert_not_called()
 
 @patch('seqbank.dfam.download_file')
 @patch('seqbank.dfam.gzip.open')
-@patch('seqbank.dfam.h5py.File')
+@patch('seqbank.dfam.import_h5py')
 @patch('seqbank.dfam.Path')
 def test_download_dfam_error(mock_path, mock_h5py, mock_gzip, mock_download_file, mock_seqbank):
     # Setup mocks to raise an exception
@@ -83,7 +86,7 @@ def test_download_dfam_error(mock_path, mock_h5py, mock_gzip, mock_download_file
     assert result is False
     mock_download_file.assert_called_once()
     mock_gzip.assert_not_called()
-    mock_h5py.assert_not_called()
+    mock_h5py.return_value.File.assert_not_called()
     mock_seqbank.add.assert_not_called()
     mock_seqbank.save_seen_url.assert_not_called()
 
@@ -95,10 +98,11 @@ def seqbank_with_temp_dir():
     yield seqbank, Path(temp_dir.name)
     temp_dir.cleanup()
 
+@patch('seqbank.dfam.import_h5py')
 @patch('seqbank.dfam.dfam_url')
 @patch('seqbank.dfam.download_file')
 @patch('seqbank.dfam.add_dfam')
-def test_download_dfam_success(mock_add_dfam, mock_download_file, mock_dfam_url, seqbank_with_temp_dir):
+def test_download_dfam_success(mock_add_dfam, mock_download_file, mock_dfam_url, mock_import_h5py, seqbank_with_temp_dir):
     """Test that the download_dfam function works correctly."""
     seqbank, _ = seqbank_with_temp_dir
 
@@ -128,6 +132,7 @@ def test_download_dfam_success(mock_add_dfam, mock_download_file, mock_dfam_url,
 @pytest.fixture
 def temp_hdf5_file():
     """Fixture to create a temporary HDF5 file with test data."""
+    h5py = pytest.importorskip("h5py")
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix='.h5')
     file_path = Path(temp_file.name)
 
@@ -153,3 +158,32 @@ def test_add_dfam(temp_hdf5_file):
     
     # Assertions
     mock_seqbank.add.assert_called_once_with(seq='mock_seq', accession='mock_accession')
+
+
+def test_dfam_module_imports_without_h5py():
+    """seqbank.dfam (and so the seqbank CLI) must import when h5py is not installed."""
+    with patch.dict(sys.modules, {"h5py": None}):
+        importlib.reload(seqbank.dfam)
+    importlib.reload(seqbank.dfam)
+
+
+def test_import_h5py_missing():
+    with patch.dict(sys.modules, {"h5py": None}):
+        with pytest.raises(SeqBankError, match=r"seqbank\[dfam\]"):
+            seqbank.dfam.import_h5py()
+
+
+@patch('seqbank.dfam.download_file')
+def test_download_dfam_without_h5py_fails_before_download(mock_download_file, mock_seqbank):
+    mock_seqbank.file = {}
+    with patch.dict(sys.modules, {"h5py": None}):
+        with pytest.raises(SeqBankError, match=r"seqbank\[dfam\]"):
+            download_dfam(mock_seqbank)
+    mock_download_file.assert_not_called()
+
+
+def test_add_dfam_without_h5py(mock_seqbank):
+    with patch.dict(sys.modules, {"h5py": None}):
+        with pytest.raises(SeqBankError, match=r"seqbank\[dfam\]"):
+            add_dfam(mock_seqbank, Path("unused.h5"))
+    mock_seqbank.add.assert_not_called()

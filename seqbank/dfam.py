@@ -1,11 +1,30 @@
 import gzip
 from pathlib import Path
-import h5py
+from types import ModuleType
+from typing import Any
 import tempfile
 import shutil
 
+from .exceptions import SeqBankError
 from .io import download_file
 from .seqbank import SeqBank
+
+
+def import_h5py() -> ModuleType:
+    """
+    Imports h5py, which is only needed to read Dfam's HDF5 files.
+
+    Returns:
+        ModuleType: The h5py module.
+
+    Raises:
+        SeqBankError: If h5py is not installed.
+    """
+    try:
+        import h5py
+    except ImportError as err:
+        raise SeqBankError("Reading Dfam requires h5py. Install it with: pip install 'seqbank[dfam]'") from err
+    return h5py
 
 
 def dfam_url(curated: bool = True, release: str = "current") -> str:
@@ -32,9 +51,10 @@ def add_dfam(seqbank: SeqBank, local_path: Path) -> None:
         seqbank (SeqBank): The SeqBank instance to add sequences to.
         local_path (Path): The path to the local Dfam HDF5 file.
     """
+    h5py = import_h5py()
     file = h5py.File(local_path, "r")
 
-    def visitor_func(name: str, node: h5py.HLObject) -> None:
+    def visitor_func(name: str, node: Any) -> None:
         if isinstance(node, h5py.Dataset):
             accession = node.attrs["accession"]
             seq = node.attrs["consensus"]
@@ -55,7 +75,11 @@ def download_dfam(seqbank: SeqBank, curated: bool = True, release: str = "curren
 
     Returns:
         bool: True if the download and addition were successful, False otherwise.
+
+    Raises:
+        SeqBankError: If h5py is not installed. This is checked before downloading.
     """
+    import_h5py()
     url = dfam_url(curated, release)
     url_key = seqbank.key_url(url)
 

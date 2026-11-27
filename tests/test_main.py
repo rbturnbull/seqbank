@@ -6,7 +6,6 @@ from unittest.mock import patch, MagicMock
 from pathlib import Path
 import shutil
 import pytest
-import h5py
 
 
 TEST_DATA_PATH = Path(__file__).parent / "testdata"
@@ -197,6 +196,7 @@ def seqbank_with_temp_dir():
 @pytest.fixture
 def temp_hdf5_file():
     """Fixture to create a temporary HDF5 file with test data."""
+    h5py = pytest.importorskip("h5py")
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".h5")
     file_path = Path(temp_file.name)
 

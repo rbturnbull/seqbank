@@ -159,6 +159,9 @@ To download and add DFam sequences from the current release with curated data:
 
     seqbank dfam /path/to/seqbank --release current --curated
 
+DFam is distributed as an HDF5 file, so this command needs ``h5py``. Install it with ``pip install 'seqbank[dfam]'``
+(it is also included in ``seqbank[all]``).
+
 **Use case:**  
 If you are studying repetitive elements in a genome, you can easily integrate sequences from DFam into your SeqBank database for comprehensive analysis.
 
