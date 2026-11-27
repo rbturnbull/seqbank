@@ -298,3 +298,107 @@ def test_cli_lmdb_only(tmp_path, no_rocksdict):
     result = runner.invoke(app, ["export", str(bank), str(out)])
     assert result.exit_code == 0, result.output
     assert ">one\nACGT" in out.read_text()
+
+
+def test_unidentifiable_existing_directory(tmp_path):
+    path = tmp_path / "bank"
+    path.mkdir()
+    (path / "something").write_text("not a bank")
+    with pytest.raises(SeqBankError, match="Cannot identify"):
+        SeqBank(path).file
+
+
+def test_legacy_detected_without_metadata(tmp_path):
+    # A directory with a RocksDB CURRENT file but no metadata is a pre-metadata Speedict bank.
+    path = tmp_path / "bank"
+    path.mkdir()
+    (path / "CURRENT").write_text("MANIFEST-000001\n")
+    with pytest.raises(SeqBankError, match="Bank uses speedict, not lmdb"):
+        SeqBank(path, engine="lmdb").file
+
+
+def test_storage_missing_keys(tmp_path, engine):
+    bank = SeqBank(tmp_path / "bank", write=True, engine=engine)
+    with pytest.raises(KeyError):
+        bank.file[b"missing"]
+    bank.close()
+
+
+def test_lmdb_delete_missing_key(tmp_path):
+    bank = SeqBank(tmp_path / "bank", write=True, engine="lmdb")
+    with pytest.raises(KeyError):
+        del bank.file[b"missing"]
+    bank.close()
+
+
+def test_long_key_lookup_by_raw_key(tmp_path, engine):
+    from seqbank.storage import _storage_key
+
+    bank = SeqBank(tmp_path / "bank", write=True, engine=engine)
+    key = bank.key_url("https://example.com/" + "x" * 700)
+    bank.file[key] = b"value"
+    assert _storage_key(key) != key
+    assert bank.file[key] == b"value"
+    bank.close()
+
+
+def test_metadata_created_concurrently(tmp_path, monkeypatch):
+    """Another writer creating the metadata file first is not an error."""
+    from pathlib import Path
+
+    real_open = Path.open
+
+    def racing_open(self, mode="r", *args, **kwargs):
+        if self.name == METADATA and mode == "x":
+            # Another process wins the race between the existence check and creation.
+            self.write_text('{"engine": "lmdb", "format_version": 1}')
+        return real_open(self, mode, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "open", racing_open)
+    bank = SeqBank(tmp_path / "bank", write=True, engine="lmdb")
+    bank.add("A", "a")
+    bank.close()
+    assert json.loads((bank.path / METADATA).read_text())["engine"] == "lmdb"
+
+
+def test_metadata_write_failure_closes_storage(tmp_path, monkeypatch):
+    import seqbank.storage as storage
+
+    closed = []
+    real_storage = storage.LMDBStorage
+
+    class TrackingStorage(real_storage):
+        def close(self):
+            closed.append(True)
+            super().close()
+
+    def failing_dump(*args, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(storage, "LMDBStorage", TrackingStorage)
+    monkeypatch.setattr(storage.json, "dump", failing_dump)
+    with pytest.raises(OSError, match="disk full"):
+        storage.open_storage(tmp_path / "bank", write=True, requested="lmdb")
+    assert closed == [True]
+
+
+def test_copy_in_batches(tmp_path, engine):
+    source = SeqBank(tmp_path / "source", write=True, engine=engine)
+    source.file.put_many((f"/seqbank/{i}".encode(), b"\x01\x02") for i in range(2500))
+    destination = SeqBank(tmp_path / "destination", write=True, engine="lmdb")
+    source.copy(destination)
+    assert len(destination) == 2500
+    source.close()
+    destination.close()
+
+
+def test_copy_empty_bank_creates_destination(tmp_path):
+    source = SeqBank(tmp_path / "source", write=True, engine="lmdb")
+    source.file
+    destination_path = tmp_path / "destination"
+    destination = SeqBank(destination_path, write=True, engine="lmdb")
+    source.copy(destination)
+    assert (destination_path / METADATA).exists()
+    assert len(destination) == 0
+    source.close()
+    destination.close()

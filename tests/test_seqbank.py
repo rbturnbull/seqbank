@@ -547,3 +547,11 @@ def test_add_urls_max(mock_delayed, mock_parallel, mock_add_url, seqbank):
     called_urls = [call[0][0] for call in mock_add_url.call_args_list]
     # Thread scheduling does not guarantee invocation order.
     assert sorted(called_urls) == sorted(urls[:max_urls])
+
+def test_seqbank_add_seq(tmp_path):
+    from Bio.Seq import Seq
+
+    seqbank = SeqBank(path=tmp_path / "seqbank.sb", write=True)
+    seqbank.add(Seq("ATCG"), "test")
+    assert np.all(seqbank.numpy("test") == np.array([1, 4, 2, 3], dtype="u1"))
+    seqbank.close()
