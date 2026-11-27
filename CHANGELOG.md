@@ -1,6 +1,6 @@
 # Release notes
 
-## Unreleased
+## 0.5.0
 
 - `h5py` is now an optional extra, needed only for `seqbank dfam`: `pip install 'seqbank[dfam]'`.
   It is also included in the `all` extra. Without it, `seqbank dfam` raises an error explaining what to
